@@ -1,7 +1,7 @@
 # PayWeb_Magento_2
 ## DPO PayGate Magento plugin v2.2.6 for Magento v2.2.3
 
-This is the DPO PayGate PayWeb3 plugin for CS-Cart. Please feel free to contact the DPO PayGate support team at support@paygate.co.za should you require any assistance.
+This is the DPO PayGate PayWeb3 plugin for Magento 2. Please feel free to contact the DPO PayGate support team at support@paygate.co.za should you require any assistance.
 
 ## Installation
 
