@@ -27,7 +27,6 @@ class Success extends \Paygate\Paygate\Controller\AbstractPaygate
      */
     public function execute()
     {
-
         $pre = __METHOD__ . " : ";
         $this->_logger->debug( $pre . 'bof' );
         $page_object = $this->pageFactory->create();
@@ -38,7 +37,7 @@ class Success extends \Paygate\Paygate\Controller\AbstractPaygate
 
             // Get the user session
             $this->_order = $this->_checkoutSession->getLastRealOrder();
-
+            $baseurl      = $this->_storeManager->getStore()->getBaseUrl();
             if ( isset( $_POST['TRANSACTION_STATUS'] ) ) {
                 $status = $_POST['TRANSACTION_STATUS'];
 
@@ -77,22 +76,21 @@ class Success extends \Paygate\Paygate\Controller\AbstractPaygate
                         )
                             ->setIsCustomerNotified( true )
                             ->save();
-
                         // Invoice capture code completed
-                        $this->_redirect( 'checkout/onepage/success' );
+                        echo '<script>parent.location="' . $baseurl . 'checkout/onepage/success";</script>';
                         break;
                     case 2:
                         $this->messageManager->addNotice( 'Transaction has been declined.' );
                         $this->_order->registerCancellation( 'Redirect Response, Transaction has been declined, Pay_Request_Id: ' . $_POST['PAY_REQUEST_ID'] )->save();
                         $this->_checkoutSession->restoreQuote();
-                        $this->_redirect( 'checkout/cart' );
+                        echo '<script>window.top.location.href="' . $baseurl . 'checkout/cart/";</script>';
                         break;
                     case 0:
                     case 4:
                         $this->messageManager->addNotice( 'Transaction has been cancelled' );
                         $this->_order->registerCancellation( 'Redirect Response, Transaction has been cancelled, Pay_Request_Id: ' . $_POST['PAY_REQUEST_ID'] )->save();
                         $this->_checkoutSession->restoreQuote();
-                        $this->_redirect( 'checkout/cart' );
+                        echo '<script>window.top.location.href="' . $baseurl . 'checkout/cart/";</script>';
                         break;
                     default:
                         break;
@@ -101,11 +99,11 @@ class Success extends \Paygate\Paygate\Controller\AbstractPaygate
         } catch ( \Magento\Framework\Exception\LocalizedException $e ) {
             $this->_logger->error( $pre . $e->getMessage() );
             $this->messageManager->addExceptionMessage( $e, $e->getMessage() );
-            $this->_redirect( 'checkout/cart' );
+            echo '<script>window.top.location.href="' . $baseurl . 'checkout/cart/";</script>';
         } catch ( \Exception $e ) {
             $this->_logger->error( $pre . $e->getMessage() );
             $this->messageManager->addExceptionMessage( $e, __( 'We can\'t start PayGate Checkout.' ) );
-            $this->_redirect( 'checkout/cart' );
+            echo '<script>window.top.location.href="' . $baseurl . 'checkout/cart/";</script>';
         }
 
         return '';
