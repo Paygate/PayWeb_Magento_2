@@ -135,7 +135,9 @@ abstract class AbstractPaygate extends AppAction implements RedirectLoginInterfa
         \Paygate\Paygate\Model\Paygate $paymentMethod,
         \Magento\Framework\UrlInterface $urlBuilder,
         \Magento\Sales\Api\OrderRepositoryInterface $orderRepository,
-        \Magento\Store\Model\StoreManagerInterface $storeManager
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Sales\Model\Order\Email\Sender\OrderSender $OrderSender,
+        \Magento\Framework\Stdlib\DateTime\DateTime $date
     ) {
         $pre = __METHOD__ . " : ";
 
@@ -152,11 +154,13 @@ abstract class AbstractPaygate extends AppAction implements RedirectLoginInterfa
         $this->pageFactory         = $pageFactory;
         $this->_invoiceService     = $invoiceService;
         $this->invoiceSender       = $invoiceSender;
+        $this->OrderSender         = $OrderSender;
         $this->_transactionFactory = $transactionFactory;
         $this->_paymentMethod      = $paymentMethod;
         $this->_urlBuilder         = $urlBuilder;
         $this->orderRepository     = $orderRepository;
         $this->_storeManager       = $storeManager;
+        $this->_date               = $date;
 
         parent::__construct( $context );
 

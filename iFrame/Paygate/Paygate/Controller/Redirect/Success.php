@@ -56,6 +56,14 @@ class Success extends \Paygate\Paygate\Controller\AbstractPaygate
                         $this->_order->save();
                         $order = $this->_order;
 
+                        $model                  = $this->_paymentMethod;
+                        $order_successful_email = $model->getConfigData( 'order_email' );
+
+                        if ( $order_successful_email != '0' ) {
+                            $this->OrderSender->send( $order );
+                            $order->addStatusHistoryComment( __( 'Notified customer about order #%1.', $order->getId() ) )->setIsCustomerNotified( true )->save();
+                        }
+
                         // Capture invoice when payment is successfull
                         $invoice = $this->_invoiceService->prepareInvoice( $order );
                         $invoice->setRequestedCaptureCase( \Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE );
@@ -69,13 +77,12 @@ class Success extends \Paygate\Paygate\Controller\AbstractPaygate
                         $transaction->save();
 
                         // Magento\Sales\Model\Order\Email\Sender\InvoiceSender
-                        $this->invoiceSender->send( $invoice );
+                        $send_invoice_email = $model->getConfigData( 'invoice_email' );
+                        if ( $send_invoice_email != '0' ) {
+                            $this->invoiceSender->send( $invoice );
+                            $order->addStatusHistoryComment( __( 'Notified customer about invoice #%1.', $invoice->getId() ) )->setIsCustomerNotified( true )->save();
+                        }
 
-                        $order->addStatusHistoryComment(
-                            __( 'Notified customer about invoice #%1.', $invoice->getId() )
-                        )
-                            ->setIsCustomerNotified( true )
-                            ->save();
                         // Invoice capture code completed
                         echo '<script>parent.location="' . $baseurl . 'checkout/onepage/success";</script>';
                         break;
