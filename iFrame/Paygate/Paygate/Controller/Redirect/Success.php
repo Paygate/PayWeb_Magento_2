@@ -88,14 +88,16 @@ class Success extends \Paygate\Paygate\Controller\AbstractPaygate
                         break;
                     case 2:
                         $this->messageManager->addNotice( 'Transaction has been declined.' );
-                        $this->_order->registerCancellation( 'Redirect Response, Transaction has been declined, Pay_Request_Id: ' . $_POST['PAY_REQUEST_ID'] )->save();
+                        $this->_order->addStatusHistoryComment( __( 'Redirect Response, Transaction has been declined, Pay_Request_Id: ' . $_POST['PAY_REQUEST_ID'] ) )->setIsCustomerNotified( false );
+                        $this->_order->cancel()->save();
                         $this->_checkoutSession->restoreQuote();
                         echo '<script>window.top.location.href="' . $baseurl . 'checkout/cart/";</script>';
                         break;
                     case 0:
                     case 4:
                         $this->messageManager->addNotice( 'Transaction has been cancelled' );
-                        $this->_order->registerCancellation( 'Redirect Response, Transaction has been cancelled, Pay_Request_Id: ' . $_POST['PAY_REQUEST_ID'] )->save();
+                        $this->_order->addStatusHistoryComment( __( 'Redirect Response, Transaction has been cancelled, Pay_Request_Id: ' . $_POST['PAY_REQUEST_ID'] ) )->setIsCustomerNotified( false );
+                        $this->_order->cancel()->save();
                         $this->_checkoutSession->restoreQuote();
                         echo '<script>window.top.location.href="' . $baseurl . 'checkout/cart/";</script>';
                         break;
