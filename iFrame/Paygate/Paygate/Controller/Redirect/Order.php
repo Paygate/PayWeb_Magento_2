@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2018 PayGate (Pty) Ltd
+ * Copyright (c) 2019 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -387,4 +387,4 @@ class Order extends \Paygate\Paygate\Controller\AbstractPaygate
 
         }
     }
-}
+}
