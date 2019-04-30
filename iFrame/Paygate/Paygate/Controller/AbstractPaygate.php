@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2018 PayGate (Pty) Ltd
+ * Copyright (c) 2019 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -10,6 +10,7 @@ namespace Paygate\Paygate\Controller;
 
 use Magento\Checkout\Controller\Express\RedirectLoginInterface;
 use Magento\Framework\App\Action\Action as AppAction;
+use Magento\Framework\App\CsrfAwareActionInterface;
 use Paygate\Paygate\Model\Paygate;
 
 /**
@@ -139,6 +140,15 @@ abstract class AbstractPaygate extends AppAction implements RedirectLoginInterfa
         \Magento\Sales\Model\Order\Email\Sender\OrderSender $OrderSender,
         \Magento\Framework\Stdlib\DateTime\DateTime $date
     ) {
+        // CsrfAwareAction Magento2.3 compatibility
+        if (interface_exists("\Magento\Framework\App\CsrfAwareActionInterface")) {
+            $request = $this->getRequest();
+            if ($request instanceof HttpRequest && $request->isPost() && empty($request->getParam('form_key'))) {
+                $formKey = $this->_objectManager->get(\Magento\Framework\Data\Form\FormKey::class);
+                $request->setParam('form_key', $formKey->getFormKey());
+            }
+        }
+        
         $pre = __METHOD__ . " : ";
 
         $this->_logger = $logger;

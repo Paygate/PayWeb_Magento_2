@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--
 /*
- * Copyright (c) 2018 PayGate (Pty) Ltd
+ * Copyright (c) 2019 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  * 
@@ -10,7 +10,7 @@
 -->
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
 <head>
-	<css src="Paygate_Paygate::css/payPopupStyle.css" />
+	<css src="Paygate_Paygate::css/paygate_checkout.css" />
 </head>
 <body>
     <referenceBlock name="checkout.root">
