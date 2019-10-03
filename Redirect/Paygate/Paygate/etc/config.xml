@@ -13,8 +13,8 @@
         <payment>
             <paygate>
                 <active>1</active>
-                <title>Paygate</title>
-                <instructions>Pay via Paygate</instructions>
+                <title>PayGate</title>
+                <instructions>Pay via PayGate</instructions>
                 <payment_action>Authorization</payment_action>
                 <test>1</test>
                 <model>Paygate\Paygate\Model\Paygate</model>
@@ -25,6 +25,9 @@
                 <can_void>1</can_void>
                 <can_refund>0</can_refund>
                 <can_use_for_multishipping>1</can_use_for_multishipping>
+                <ipn_method>1</ipn_method>
+                <order_email>1</order_email>
+                <invoice_email>0</invoice_email>
             </paygate>
         </payment>
     </default>

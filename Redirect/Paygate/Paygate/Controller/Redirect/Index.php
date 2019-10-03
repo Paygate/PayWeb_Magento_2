@@ -3,10 +3,12 @@
  * Copyright (c) 2019 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
- * 
+ *
  * Released under the GNU General Public License
  */
 namespace Paygate\Paygate\Controller\Redirect;
+
+require_once __DIR__ . '/../AbstractPaygate.php';
 
 /**
  * Responsible for loading page content.
@@ -38,7 +40,7 @@ class Index extends \Paygate\Paygate\Controller\AbstractPaygate
         $page_object = $this->pageFactory->create();
 
         try {
-            $this->_initCheckout();
+            $order = $this->_initCheckout();
         } catch ( \Magento\Framework\Exception\LocalizedException $e ) {
             $this->_logger->error( $pre . $e->getMessage() );
             $this->messageManager->addExceptionMessage( $e, $e->getMessage() );
@@ -48,6 +50,10 @@ class Index extends \Paygate\Paygate\Controller\AbstractPaygate
             $this->messageManager->addExceptionMessage( $e, __( 'We can\'t start PayGate Checkout.' ) );
             $this->_redirect( 'checkout/cart' );
         }
+
+        $page_object->getLayout()
+            ->getBlock( 'paygate' )
+            ->setPaymentFormData( isset( $order ) ? $order : null );
 
         return $page_object;
     }
