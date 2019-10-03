@@ -6,7 +6,7 @@
  * 
  * Released under the GNU General Public License
  */
-namespace Paygate\Paygate\Block\Paygate;
+namespace Paygate\Paygate\Block;
 
 use Magento\Customer\Helper\Session\CurrentCustomer;
 use Magento\Framework\Locale\ResolverInterface;
@@ -68,6 +68,8 @@ class Form extends \Magento\Payment\Block\Form
         CurrentCustomer $currentCustomer,
         array $data = []
     ) {
+        parent::__construct($context, $data);
+
         $pre = __METHOD__ . " : ";
         $this->_logger->debug( $pre . 'bof' );
         $this->_paygateData         = $paygateData;
@@ -76,21 +78,9 @@ class Form extends \Magento\Payment\Block\Form
         $this->_config              = null;
         $this->_isScopePrivate      = true;
         $this->currentCustomer      = $currentCustomer;
-        parent::__construct( $context, $data );
         $this->_logger->debug( $pre . "eof" );
-    }
 
-    /**
-     * Set template and redirect message
-     *
-     * @return null
-     */
-    protected function _construct()
-    {
-        $pre = __METHOD__ . " : ";
-        $this->_logger->debug( $pre . 'bof' );
         $this->_config = $this->paygateConfigFactory->create()->setMethod( $this->getMethodCode() );
-        parent::_construct();
     }
 
     /**

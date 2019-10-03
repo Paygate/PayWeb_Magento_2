@@ -50,6 +50,11 @@
                 <field id="instructions" translate="label" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Instructions</label>
                 </field>
+                <field id="ipn_method" translate="label" type="select" sortOrder="42" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Process Transaction using (IPN)</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Select "Yes" to process transactions using Instant Payment Notification (IPN method). If "No", this will fallback to the client's Browser (Redirect method).</comment>
+                </field>
                 <field id="order_email" translate="label" type="select" sortOrder="42" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Send Order Email</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>

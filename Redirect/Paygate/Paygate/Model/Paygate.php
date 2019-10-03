@@ -10,9 +10,9 @@ namespace Paygate\Paygate\Model;
 
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
+use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment;
 use Magento\Sales\Model\Order\Payment\Transaction;
-use Magento\Framework\Data\Form\FormKey;
 
 /**
  * @SuppressWarnings(PHPMD.TooManyFields)
@@ -142,11 +142,6 @@ class Paygate extends \Magento\Payment\Model\Method\AbstractMethod
     protected $_urlBuilder;
 
     /**
-     * @var \Magento\Framework\UrlInterface
-     */
-    protected $_formKey;
-
-    /**
      * @var \Magento\Checkout\Model\Session
      */
     protected $_checkoutSession;
@@ -197,7 +192,6 @@ class Paygate extends \Magento\Payment\Model\Method\AbstractMethod
         ConfigFactory $configFactory,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\UrlInterface $urlBuilder,
-        \Magento\Framework\Data\Form\FormKey $formKey,
         \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Framework\Exception\LocalizedExceptionFactory $exception,
         \Magento\Sales\Api\TransactionRepositoryInterface $transactionRepository,
@@ -208,7 +202,6 @@ class Paygate extends \Magento\Payment\Model\Method\AbstractMethod
         parent::__construct( $context, $registry, $extensionFactory, $customAttributeFactory, $paymentData, $scopeConfig, $logger, $resource, $resourceCollection, $data );
         $this->_storeManager         = $storeManager;
         $this->_urlBuilder           = $urlBuilder;
-        $this->_formKey              = $formKey;
         $this->_checkoutSession      = $checkoutSession;
         $this->_exception            = $exception;
         $this->transactionRepository = $transactionRepository;
@@ -307,14 +300,19 @@ class Paygate extends \Magento\Payment\Model\Method\AbstractMethod
 
     /**
      * This is where we compile data posted by the form to PayGate
+     * @param Order|null $blockOrder
      * @return array
      */
-    public function getStandardCheckoutFormFields()
+    public function getStandardCheckoutFormFields($blockOrder = null)
     {
         $pre = __METHOD__ . ' : ';
         // Variable initialization
 
         $order = $this->_checkoutSession->getLastRealOrder();
+
+        if ($blockOrder && $blockOrder->getId()) {
+            $order = $blockOrder;
+        }
 
         $description = '';
 
@@ -349,13 +347,13 @@ class Paygate extends \Magento\Payment\Model\Method\AbstractMethod
             'REFERENCE'        => $order->getRealOrderId(),
             'AMOUNT'           => number_format( $this->getTotalAmount( $order ), 2, '', '' ),
             'CURRENCY'         => $order->getOrderCurrencyCode(),
-            'RETURN_URL'       => $this->_urlBuilder->getUrl( 'paygate/redirect/success', array( '_secure' => true ) ) . '?form_key=' . $this->_formKey->getFormKey(),
+            'RETURN_URL'       => $this->_urlBuilder->getUrl( 'paygate/redirect/success', array( '_secure' => true ) ),
             'TRANSACTION_DATE' => date( 'Y-m-d H:i' ),
             'LOCALE'           => 'en-za',
             'COUNTRY'          => $country_code3,
             'EMAIL'            => $order->getData( 'customer_email' ),
-            'NOTIFY_URL'       => $this->_urlBuilder->getUrl( 'paygate/notify', array( '_secure' => true ) ) . $this->_formKey->getFormKey(),
-            'USER3'            => 'magento2-v2.3.1',
+            'NOTIFY_URL'       => $this->_urlBuilder->getUrl( 'paygate/notify', array( '_secure' => true ) ),
+            'USER3'            => 'magento2-v2.3.0',
         );
 
         $fields['CHECKSUM'] = md5( implode( '', $fields ) . $encryptionKey );
