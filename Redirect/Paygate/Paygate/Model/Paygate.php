@@ -3,7 +3,7 @@
  * Copyright (c) 2019 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
- * 
+ *
  * Released under the GNU General Public License
  */
 namespace Paygate\Paygate\Model;
@@ -303,14 +303,14 @@ class Paygate extends \Magento\Payment\Model\Method\AbstractMethod
      * @param Order|null $blockOrder
      * @return array
      */
-    public function getStandardCheckoutFormFields($blockOrder = null)
+    public function getStandardCheckoutFormFields( $blockOrder = null )
     {
         $pre = __METHOD__ . ' : ';
         // Variable initialization
 
         $order = $this->_checkoutSession->getLastRealOrder();
 
-        if ($blockOrder && $blockOrder->getId()) {
+        if ( $blockOrder && $blockOrder->getId() ) {
             $order = $blockOrder;
         }
 
@@ -372,11 +372,7 @@ class Paygate extends \Magento\Payment\Model\Method\AbstractMethod
      */
     public function getTotalAmount( $order )
     {
-        if ( $this->getConfigData( 'use_store_currency' ) ) {
-            $price = $this->getNumberFormat( $order->getGrandTotal() );
-        } else {
-            $price = $this->getNumberFormat( $order->getBaseGrandTotal() );
-        }
+        $price = $this->getNumberFormat( $order->getGrandTotal() );
 
         return $price;
     }
