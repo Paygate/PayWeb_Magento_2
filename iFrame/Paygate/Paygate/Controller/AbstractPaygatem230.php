@@ -6,18 +6,21 @@
  *
  * Released under the GNU General Public License
  */
+
 namespace Paygate\Paygate\Controller;
 
 use Magento\Checkout\Controller\Express\RedirectLoginInterface;
 use Magento\Framework\App\Action\Action as AppAction;
-use Magento\Sales\Model\Order;
+use Magento\Framework\App\CsrfAwareActionInterface;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\App\Request\InvalidRequestException;
 use Paygate\Paygate\Model\Paygate;
 
 /**
  * Checkout Controller
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-abstract class AbstractPaygateM220 extends AppAction implements RedirectLoginInterface
+abstract class AbstractPaygatem230 extends AppAction implements RedirectLoginInterface, CsrfAwareActionInterface
 {
     /**
      * Internal cache of checkout models
@@ -102,11 +105,12 @@ abstract class AbstractPaygateM220 extends AppAction implements RedirectLoginInt
      * @var \Magento\Framework\DB\TransactionFactory
      */
     protected $_transactionFactory;
-
+    protected $_storeManager;
     /**
      * @var \Paygate\Paygate\Model\Paygate $_paymentMethod
      */
     protected $_paymentMethod;
+    protected $orderRepository;
 
     /**
      * @param \Magento\Framework\App\Action\Context $context
@@ -134,10 +138,12 @@ abstract class AbstractPaygateM220 extends AppAction implements RedirectLoginInt
         \Magento\Sales\Model\Service\InvoiceService $invoiceService,
         \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender,
         \Paygate\Paygate\Model\Paygate $paymentMethod,
+        \Magento\Framework\UrlInterface $urlBuilder,
+        \Magento\Sales\Api\OrderRepositoryInterface $orderRepository,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Sales\Model\Order\Email\Sender\OrderSender $OrderSender,
         \Magento\Framework\Stdlib\DateTime\DateTime $date
     ) {
-
         $pre = __METHOD__ . " : ";
 
         $this->_logger = $logger;
@@ -156,6 +162,9 @@ abstract class AbstractPaygateM220 extends AppAction implements RedirectLoginInt
         $this->OrderSender         = $OrderSender;
         $this->_transactionFactory = $transactionFactory;
         $this->_paymentMethod      = $paymentMethod;
+        $this->_urlBuilder         = $urlBuilder;
+        $this->orderRepository     = $orderRepository;
+        $this->_storeManager       = $storeManager;
         $this->_date               = $date;
 
         parent::__construct( $context );
@@ -167,9 +176,26 @@ abstract class AbstractPaygateM220 extends AppAction implements RedirectLoginInt
     }
 
     /**
+     * @inheritDoc
+     */
+    public function createCsrfValidationException(
+        RequestInterface $request
+    ):  ? InvalidRequestException {
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function validateForCsrf( RequestInterface $request ) :  ? bool
+    {
+        return true;
+    }
+
+    /**
      * Custom getter for payment configuration
      *
-     * @param string $field   i.e paygate_id, test_mode
+     * @param string $field i.e paygate_id, test_mode
      *
      * @return mixed
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
@@ -182,7 +208,7 @@ abstract class AbstractPaygateM220 extends AppAction implements RedirectLoginInt
     /**
      * Instantiate
      *
-     * @return Order
+     * @return void
      * @throws \Magento\Framework\Exception\LocalizedException
      */
     protected function _initCheckout()
@@ -212,7 +238,6 @@ abstract class AbstractPaygateM220 extends AppAction implements RedirectLoginInt
 
         $this->_logger->debug( $pre . 'eof' );
 
-        return $this->_order;
     }
 
     /**

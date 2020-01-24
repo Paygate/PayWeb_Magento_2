@@ -1,11 +1,12 @@
 <?php
 /*
- * Copyright (c) 2019 PayGate (Pty) Ltd
+ * Copyright (c) 2020 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
  * Released under the GNU General Public License
  */
+
 namespace Paygate\Paygate\Controller\Redirect;
 
 /**
@@ -30,8 +31,7 @@ class Success extends \Paygate\Paygate\Controller\AbstractPaygate
         $pre = __METHOD__ . " : ";
         $this->_logger->debug( $pre . 'bof' );
         $page_object = $this->pageFactory->create();
-        try
-        {
+        try {
             // Get the user session
             $this->_order = $this->_checkoutSession->getLastRealOrder();
 
@@ -85,6 +85,7 @@ class Success extends \Paygate\Paygate\Controller\AbstractPaygate
 
                         // Invoice capture code completed
                         echo '<script>parent.location="' . $baseurl . 'checkout/onepage/success";</script>';
+                        exit;
                         break;
                     case 2:
                         $this->messageManager->addNotice( 'Transaction has been declined.' );
@@ -92,6 +93,7 @@ class Success extends \Paygate\Paygate\Controller\AbstractPaygate
                         $this->_order->cancel()->save();
                         $this->_checkoutSession->restoreQuote();
                         echo '<script>window.top.location.href="' . $baseurl . 'checkout/cart/";</script>';
+                        exit;
                         break;
                     case 0:
                     case 4:
@@ -100,6 +102,7 @@ class Success extends \Paygate\Paygate\Controller\AbstractPaygate
                         $this->_order->cancel()->save();
                         $this->_checkoutSession->restoreQuote();
                         echo '<script>window.top.location.href="' . $baseurl . 'checkout/cart/";</script>';
+                        exit;
                         break;
                     default:
                         break;

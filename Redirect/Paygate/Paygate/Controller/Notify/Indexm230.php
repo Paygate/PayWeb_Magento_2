@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2019 PayGate (Pty) Ltd
+ * Copyright (c) 2020 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -8,6 +8,7 @@
  *
  * Magento v2.3.0+ implement CsrfAwareActionInterface but not earlier versions
  */
+
 namespace Paygate\Paygate\Controller\Notify;
 
 use Magento\Framework\App\CsrfAwareActionInterface;
@@ -94,50 +95,56 @@ class Indexm230 extends \Paygate\Paygate\Controller\AbstractPaygate implements C
                 $this->_order  = $this->_orderFactory->create()->loadByIncrementId( $orderId );
                 $this->storeId = $this->_order->getStoreId();
 
+                //Check to see if order already has an invoice
+                $hasInvoices = $this->_order->hasInvoices();
+
                 // Update order additional payment information
 
-                if ( $status == 1 ) {
-                    $this->_order->setStatus( \Magento\Sales\Model\Order::STATE_PROCESSING );
-                    $this->_order->save();
-                    $this->_order->addStatusHistoryComment( "Notify Response, Transaction has been approved, TransactionID: " . $transactionId, \Magento\Sales\Model\Order::STATE_PROCESSING )->setIsCustomerNotified( false )->save();
+                if ( !$hasInvoices ) {
+                    if ( $status == 1 ) {
+                        $this->_order->setStatus( \Magento\Sales\Model\Order::STATE_PROCESSING );
+                        $this->_order->save();
+                        $this->_order->addStatusHistoryComment( "Notify Response, Transaction has been approved, TransactionID: " . $transactionId, \Magento\Sales\Model\Order::STATE_PROCESSING )->setIsCustomerNotified( false )->save();
 
-                    $order                  = $this->_order;
-                    $order_successful_email = $this->_paymentMethod->getConfigData( 'order_email' );
-                    if ( $order_successful_email != '0' ) {
-                        $this->OrderSender->send( $order );
-                        $order->addStatusHistoryComment( __( 'Notified customer about order #%1.', $order->getId() ) )->setIsCustomerNotified( true )->save();
+                        $order                  = $this->_order;
+                        $order_successful_email = $this->_paymentMethod->getConfigData( 'order_email' );
+                        if ( $order_successful_email != '0' ) {
+                            $this->OrderSender->send( $order );
+                            $order->addStatusHistoryComment( __( 'Notified customer about order #%1.', $order->getId() ) )->setIsCustomerNotified( true )->save();
+                        }
+
+                        // Capture invoice when payment is successfull
+                        $invoice = $this->_invoiceService->prepareInvoice( $order );
+                        $invoice->setRequestedCaptureCase( \Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE );
+                        $invoice->register();
+
+                        // Save the invoice to the order
+                        $transaction = $this->_objectManager->create( 'Magento\Framework\DB\Transaction' )
+                            ->addObject( $invoice )
+                            ->addObject( $invoice->getOrder() );
+
+                        $transaction->save();
+
+                        // Magento\Sales\Model\Order\Email\Sender\InvoiceSender
+                        $send_invoice_email = $this->_paymentMethod->getConfigData( 'invoice_email' );
+                        if ( $send_invoice_email != '0' ) {
+                            $this->invoiceSender->send( $invoice );
+                            $order->addStatusHistoryComment( __( 'Notified customer about invoice #%1.', $invoice->getId() ) )->setIsCustomerNotified( true )->save();
+                        }
+                    } elseif ( $status == 2 ) {
+                        $this->_order->setStatus( \Magento\Sales\Model\Order::STATE_CANCELED );
+                        $this->_order->save();
+                        $this->_order->addStatusHistoryComment( "Notify Response, The User Failed to make Payment with PayGate due to transaction being declined, TransactionID: " . $transactionId, \Magento\Sales\Model\Order::STATE_PROCESSING )->setIsCustomerNotified( false )->save();
+                    } elseif ( $status == 0 || $status == 4 ) {
+                        $this->_order->setStatus( \Magento\Sales\Model\Order::STATE_CANCELED );
+                        $this->_order->save();
+                        $this->_order->addStatusHistoryComment( "Notify Response, The User Cancelled Payment with PayGate, PayRequestID: " . $payRequestId, \Magento\Sales\Model\Order::STATE_CANCELED )->setIsCustomerNotified( false )->save();
                     }
-
-                    // Capture invoice when payment is successfull
-                    $invoice = $this->_invoiceService->prepareInvoice( $order );
-                    $invoice->setRequestedCaptureCase( \Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE );
-                    $invoice->register();
-
-                    // Save the invoice to the order
-                    $transaction = $this->_objectManager->create( 'Magento\Framework\DB\Transaction' )
-                        ->addObject( $invoice )
-                        ->addObject( $invoice->getOrder() );
-
-                    $transaction->save();
-
-                    // Magento\Sales\Model\Order\Email\Sender\InvoiceSender
-                    $send_invoice_email = $this->_paymentMethod->getConfigData( 'invoice_email' );
-                    if ( $send_invoice_email != '0' ) {
-                        $this->invoiceSender->send( $invoice );
-                        $order->addStatusHistoryComment( __( 'Notified customer about invoice #%1.', $invoice->getId() ) )->setIsCustomerNotified( true )->save();
-                    }
-                } elseif ( $status == 2 ) {
-                    $this->_order->setStatus( \Magento\Sales\Model\Order::STATE_CANCELED );
-                    $this->_order->save();
-                    $this->_order->addStatusHistoryComment( "Notify Response, The User Failed to make Payment with PayGate due to transaction being declined, TransactionID: " . $transactionId, \Magento\Sales\Model\Order::STATE_PROCESSING )->setIsCustomerNotified( false )->save();
-                } elseif ( $status == 0 || $status == 4 ) {
-                    $this->_order->setStatus( \Magento\Sales\Model\Order::STATE_CANCELED );
-                    $this->_order->save();
-                    $this->_order->addStatusHistoryComment( "Notify Response, The User Cancelled Payment with PayGate, PayRequestID: " . $payRequestId, \Magento\Sales\Model\Order::STATE_CANCELED )->setIsCustomerNotified( false )->save();
                 }
             }
         }
     }
+
     // Retrieve post data
     public function getPostData()
     {
