@@ -6,17 +6,12 @@
  *
  * Released under the GNU General Public License
  */
-namespace Paygate\Paygate\Controller\Redirect;
 
-require_once __DIR__ . '/../AbstractPaygate.php';
+namespace Paygate\Paygate\Controller\Notify;
 
-/**
- * Responsible for loading page content.
- *
- * This is a basic controller that only loads the corresponding layout file. It may duplicate other such
- * controllers, and thus it is considered tech debt. This code duplication will be resolved in future releases.
- */
-class Index extends \Paygate\Paygate\Controller\AbstractPaygate
+use Paygate\Paygate\Controller\AbstractPaygate;
+
+class Indexm220 extends AbstractPaygate
 {
     /**
      * @var \Magento\Framework\View\Result\PageFactory
@@ -40,7 +35,7 @@ class Index extends \Paygate\Paygate\Controller\AbstractPaygate
         $page_object = $this->pageFactory->create();
 
         try {
-            $order = $this->_initCheckout();
+            $this->_initCheckout();
         } catch ( \Magento\Framework\Exception\LocalizedException $e ) {
             $this->_logger->error( $pre . $e->getMessage() );
             $this->messageManager->addExceptionMessage( $e, $e->getMessage() );
@@ -50,10 +45,6 @@ class Index extends \Paygate\Paygate\Controller\AbstractPaygate
             $this->messageManager->addExceptionMessage( $e, __( 'We can\'t start PayGate Checkout.' ) );
             $this->_redirect( 'checkout/cart' );
         }
-
-        $page_object->getLayout()
-            ->getBlock( 'paygate' )
-            ->setPaymentFormData( isset( $order ) ? $order : null );
 
         return $page_object;
     }

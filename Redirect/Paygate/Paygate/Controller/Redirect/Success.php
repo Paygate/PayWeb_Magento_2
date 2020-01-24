@@ -1,11 +1,12 @@
 <?php
 /*
- * Copyright (c) 2019 PayGate (Pty) Ltd
+ * Copyright (c) 2020 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
  * Released under the GNU General Public License
  */
+
 namespace Paygate\Paygate\Controller\Redirect;
 
 require_once __DIR__ . '/../AbstractPaygate.php';
@@ -33,8 +34,7 @@ class Success extends \Paygate\Paygate\Controller\AbstractPaygate
         $pre = __METHOD__ . " : ";
         $this->_logger->debug( $pre . 'bof' );
         $page_object = $this->pageFactory->create();
-        try
-        {
+        try {
             // Get the user session
             $this->_order = $this->_checkoutSession->getLastRealOrder();
 
@@ -71,17 +71,22 @@ class Success extends \Paygate\Paygate\Controller\AbstractPaygate
                                 $order->addStatusHistoryComment( __( 'Notified customer about order #%1.', $order->getId() ) )->setIsCustomerNotified( true )->save();
                             }
 
-                            // Capture invoice when payment is successfull
-                            $invoice = $this->_invoiceService->prepareInvoice( $order );
-                            $invoice->setRequestedCaptureCase( \Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE );
-                            $invoice->register();
+                            //Check to see if order already has an invoice
+                            $hasInvoices = $order->hasInvoices();
 
-                            // Save the invoice to the order
-                            $transaction = $this->_objectManager->create( 'Magento\Framework\DB\Transaction' )
-                                ->addObject( $invoice )
-                                ->addObject( $invoice->getOrder() );
+                            // Capture invoice when payment is successful
+                            if ( !$hasInvoices ) {
+                                $invoice = $this->_invoiceService->prepareInvoice( $order );
+                                $invoice->setRequestedCaptureCase( \Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE );
+                                $invoice->register();
 
-                            $transaction->save();
+                                // Save the invoice to the order
+                                $transaction = $this->_objectManager->create( 'Magento\Framework\DB\Transaction' )
+                                    ->addObject( $invoice )
+                                    ->addObject( $invoice->getOrder() );
+
+                                $transaction->save();
+                            }
 
                             // Magento\Sales\Model\Order\Email\Sender\InvoiceSender
                             $send_invoice_email = $this->_paymentMethod->getConfigData( 'invoice_email' );

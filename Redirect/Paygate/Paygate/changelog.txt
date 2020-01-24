@@ -1,0 +1,33 @@
+=====================================
+Date	  : Version: Description
+=====================================
+
+2020-01-24: v2.3.2 : Improve testing validation for existing invoices.
+                     Tested with Magento 2.3.3.
+2019-12-14: v2.3.1 : Added CSRF handling in notify script.
+                     Version check for CSRF - 2.3.0+ only.
+                     Use Grand Total only in PayGate.
+                     Added changelog.
+2019-10-03: v2.3.0 : Better compatibility with Magento 2.2.x.
+                     Process order updates in IPN or redirect.
+                     Minor bug fixes.
+2019-04-20: v2.2.9 : Magento 2.3.1 compatibility.
+                     CSRF form validation.
+                     OneStepCheckout compatibility.
+2018-09-18: v2.2.8 : Fix children order cancelling issue.
+2018-09-11: v2.2.7 : New order and invoice options.
+                     JS and popup changes.
+2018-08-30: v2.2.6 : Fix hide button.
+2018-08-23: v2.2.5 : Hide close button.
+                     Disable close modal.
+2018-06-28: v2.2.4 : Fix invoices not automatically created.
+2018-03-06: v2.2.3 : Apply rebranding.
+                     Fix redirect issue.
+2017-11-09: v2.2.2 : Setup instructions.
+                     Config bug fix.
+2017-10-29: v2.2.1 : Add system settings per store.
+                     Include ZAR as currency
+                     Fix test mode bug.
+                     Fix errors.
+2017-10-09: v2.2.0 : Change copyright 2015 -> 2017.
+                     Initial version.

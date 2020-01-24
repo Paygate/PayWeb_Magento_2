@@ -5,18 +5,18 @@
  * Author: App Inlet (Pty) Ltd
  *
  * Released under the GNU General Public License
- */
-namespace Paygate\Paygate\Controller\Redirect;
-
-require_once __DIR__ . '/../AbstractPaygate.php';
-
-/**
- * Responsible for loading page content.
  *
- * This is a basic controller that only loads the corresponding layout file. It may duplicate other such
- * controllers, and thus it is considered tech debt. This code duplication will be resolved in future releases.
+ * Magento v2.3.0+ implement CsrfAwareActionInterface but not earlier versions
  */
-class Index extends \Paygate\Paygate\Controller\AbstractPaygate
+
+namespace Paygate\Paygate\Controller\Notify;
+
+use Magento\Framework\App\CsrfAwareActionInterface;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\App\Request\InvalidRequestException;
+use Paygate\Paygate\Controller\AbstractPaygate;
+
+class Indexm230 extends AbstractPaygate implements CsrfAwareActionInterface
 {
     /**
      * @var \Magento\Framework\View\Result\PageFactory
@@ -40,7 +40,7 @@ class Index extends \Paygate\Paygate\Controller\AbstractPaygate
         $page_object = $this->pageFactory->create();
 
         try {
-            $order = $this->_initCheckout();
+            $this->_initCheckout();
         } catch ( \Magento\Framework\Exception\LocalizedException $e ) {
             $this->_logger->error( $pre . $e->getMessage() );
             $this->messageManager->addExceptionMessage( $e, $e->getMessage() );
@@ -51,11 +51,23 @@ class Index extends \Paygate\Paygate\Controller\AbstractPaygate
             $this->_redirect( 'checkout/cart' );
         }
 
-        $page_object->getLayout()
-            ->getBlock( 'paygate' )
-            ->setPaymentFormData( isset( $order ) ? $order : null );
-
         return $page_object;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function createCsrfValidationException( RequestInterface $request ):  ? InvalidRequestException
+    {
+        // TODO: Implement createCsrfValidationException() method.
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function validateForCsrf( RequestInterface $request ) :  ? bool
+    {
+        return true;
     }
 
 }
