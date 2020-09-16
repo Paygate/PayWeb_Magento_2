@@ -2,6 +2,7 @@
 Date	  : Version: Description
 =====================================
 
+2020-09-16: v2.3.3 : Fix sessions cleared in some browsers.
 2020-01-24: v2.3.2 : Improve testing validation for existing invoices.
                      Tested with Magento 2.3.3.
 2019-12-14: v2.3.1 : Added CSRF handling in notify script.
