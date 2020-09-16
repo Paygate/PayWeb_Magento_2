@@ -350,13 +350,13 @@ class Paygate extends \Magento\Payment\Model\Method\AbstractMethod
             'REFERENCE'        => $order->getRealOrderId(),
             'AMOUNT'           => number_format( $this->getTotalAmount( $order ), 2, '', '' ),
             'CURRENCY'         => $order->getOrderCurrencyCode(),
-            'RETURN_URL'       => $this->_urlBuilder->getUrl( 'paygate/redirect/success', array( '_secure' => true ) ) . '?form_key=' . $this->_formKey->getFormKey(),
+            'RETURN_URL'       => $this->_urlBuilder->getUrl( 'paygate/redirect/success', array( '_secure' => true ) ) . '?form_key=' . $this->_formKey->getFormKey() . '&gid=' . $order->getRealOrderId(),
             'TRANSACTION_DATE' => date( 'Y-m-d H:i' ),
             'LOCALE'           => 'en-za',
             'COUNTRY'          => $country_code3,
             'EMAIL'            => $order->getData( 'customer_email' ),
             'NOTIFY_URL'       => $this->_urlBuilder->getUrl( 'paygate/notify', array( '_secure' => true ) )  . '?form_key=' . $this->_formKey->getFormKey(),
-            'USER3'            => 'magento2-v2.3.1',
+            'USER3'            => 'magento2-v2.3.3',
         );
 
         $fields['CHECKSUM'] = md5( implode( '', $fields ) . $encryptionKey );
