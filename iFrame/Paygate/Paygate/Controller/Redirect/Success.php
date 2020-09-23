@@ -36,11 +36,14 @@ class Success extends \Paygate\Paygate\Controller\AbstractPaygate
             $this->_order = $this->_checkoutSession->getLastRealOrder();
 
             // Get order from POST if not in session
-            if ( empty( $this->_order->getId() ) && isset( $_GET['gid'] ) ) {
+            if ( isset( $_GET['gid'] ) ) {
                 $orderId      = filter_var( $_GET['gid'], FILTER_SANITIZE_STRING );
                 $this->_order = $this->_orderFactory->create()->loadByIncrementId( $orderId );
+                $this->_checkoutSession->setLastQuoteId( $this->_order->getQuoteId() );
+                $this->_checkoutSession->setLastSuccessQuoteId( $this->_order->getQuoteId() );
                 $this->_checkoutSession->setLastOrderId( $this->_order->getId() );
-                $this->_checkoutSession->setLastRealOrderId( $orderId );
+                $this->_checkoutSession->setLastRealOrderId( $this->_order->getIncrementId() );
+                $this->_checkoutSession->setLastOrderStatus( $this->_order->getStatus() );
             }
 
             $baseurl      = $this->_storeManager->getStore()->getBaseUrl();
