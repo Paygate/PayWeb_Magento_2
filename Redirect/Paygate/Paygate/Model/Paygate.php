@@ -353,7 +353,7 @@ class Paygate extends \Magento\Payment\Model\Method\AbstractMethod
             'COUNTRY'          => $country_code3,
             'EMAIL'            => $order->getData( 'customer_email' ),
             'NOTIFY_URL'       => $this->_urlBuilder->getUrl( 'paygate/notify', array( '_secure' => true ) ),
-            'USER3'            => 'magento2-v2.3.3',
+            'USER3'            => 'magento2-v2.3.4',
         );
 
         $fields['CHECKSUM'] = md5( implode( '', $fields ) . $encryptionKey );
