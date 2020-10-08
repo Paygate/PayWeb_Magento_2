@@ -343,7 +343,7 @@ class Paygate extends \Magento\Payment\Model\Method\AbstractMethod
             $country_code3 = 'ZAF';
         }
         $fields = array(
-            'PAYGATE_ID'       => $paygateId,
+            'PAYGATE_ID'       => trim($paygateId), //clients copy and paste badly
             'REFERENCE'        => $order->getRealOrderId(),
             'AMOUNT'           => number_format( $this->getTotalAmount( $order ), 2, '', '' ),
             'CURRENCY'         => $order->getOrderCurrencyCode(),
