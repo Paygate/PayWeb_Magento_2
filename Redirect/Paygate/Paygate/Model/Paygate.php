@@ -359,10 +359,15 @@ class Paygate extends \Magento\Payment\Model\Method\AbstractMethod
         $fields['CHECKSUM'] = md5( implode( '', $fields ) . $encryptionKey );
         $response           = $this->curlPost( 'https://secure.paygate.co.za/payweb3/initiate.trans', $fields );
         parse_str( $response, $fields );
-        $processData = array(
-            'PAY_REQUEST_ID' => $fields['PAY_REQUEST_ID'],
-            'CHECKSUM'       => $fields['CHECKSUM'],
-        );
+
+        if (strpos($response, "ERROR") === false) {
+            $processData = array(
+                'PAY_REQUEST_ID' => $fields['PAY_REQUEST_ID'],
+                'CHECKSUM' => $fields['CHECKSUM'],
+            );
+        } else {
+            $processData = array();
+        }
 
         return ( $processData );
     }
