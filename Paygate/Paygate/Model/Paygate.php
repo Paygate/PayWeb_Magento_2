@@ -343,7 +343,7 @@ class Paygate extends \Magento\Payment\Model\Method\AbstractMethod
             $country_code3 = 'ZAF';
         }
         $fields = array(
-            'PAYGATE_ID'       => $paygateId,
+            'PAYGATE_ID'       => trim($paygateId), //clients copy and paste badly
             'REFERENCE'        => $order->getRealOrderId(),
             'AMOUNT'           => number_format( $this->getTotalAmount( $order ), 2, '', '' ),
             'CURRENCY'         => $order->getOrderCurrencyCode(),
@@ -359,10 +359,15 @@ class Paygate extends \Magento\Payment\Model\Method\AbstractMethod
         $fields['CHECKSUM'] = md5( implode( '', $fields ) . $encryptionKey );
         $response           = $this->curlPost( 'https://secure.paygate.co.za/payweb3/initiate.trans', $fields );
         parse_str( $response, $fields );
-        $processData = array(
-            'PAY_REQUEST_ID' => $fields['PAY_REQUEST_ID'],
-            'CHECKSUM'       => $fields['CHECKSUM'],
-        );
+
+        if (strpos($response, "ERROR") === false) {
+            $processData = array(
+                'PAY_REQUEST_ID' => $fields['PAY_REQUEST_ID'],
+                'CHECKSUM' => $fields['CHECKSUM'],
+            );
+        } else {
+            $processData = array();
+        }
 
         return ( $processData );
     }
