@@ -1,0 +1,17 @@
+<?php
+/*
+ * Copyright (c) 2021 PayGate (Pty) Ltd
+ *
+ * Author: App Inlet (Pty) Ltd
+ *
+ * Released under the GNU General Public License
+ */
+?>
+<div class="rk button">
+    <form action="<?php echo $block->getGateUrl(); ?>" method="POST">
+        <?php foreach ( $block->getPostData() as $key => $value ): ?>
+            <input type="hidden" name="<?php echo $key; ?>" value="<?php echo $value; ?>"></input>
+        <?php endforeach;?>
+        <button type="submit">Pay</button>
+    </form>
+</div>

@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<!--
+/*
+ * Copyright (c) 2021 PayGate (Pty) Ltd
+ *
+ * Author: App Inlet (Pty) Ltd
+ * 
+ * Released under the GNU General Public License
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+    <group id="paygatecron">
+        <job instance="PayGate\PayWeb\Cron\CronQuery" method="execute" name="paygate_payweb_query">
+            <schedule>0,10,20,30,40,50 * * * *</schedule>
+        </job>
+    </group>
+</config>
