@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!--
+/*
+ * Copyright (c) 2021 PayGate (Pty) Ltd
+ *
+ * Author: App Inlet (Pty) Ltd
+ * 
+ * Released under the GNU General Public License
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="payment_method_assign_data_paygate">
+        <observer name="paygate_payment_data_assign" instance="PayGate\PayWeb\Observer\SavePayvaultInfoToOrderObserver" />
+        <observer name="paygate_payment_type_data_assign" instance="PayGate\PayWeb\Observer\SavePaymentTypeToOrderObserver" />
+    </event>
+</config>
+

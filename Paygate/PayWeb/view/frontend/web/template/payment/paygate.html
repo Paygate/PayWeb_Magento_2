@@ -1,0 +1,110 @@
+<!--
+/*
+ * Copyright (c) 2021 PayGate (Pty) Ltd
+ *
+ * Author: App Inlet (Pty) Ltd
+ * 
+ * Released under the GNU General Public License
+ */
+-->
+<div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}">
+    <div class="payment-method-title field choice">
+        <input type="radio"
+               name="payment[method]"
+               class="radio"
+               data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()"/>
+        <label data-bind="attr: {'for': getCode()}" class="label">
+            <!-- PayGate Logo -->
+            <img alt="" data-bind="attr: {src: getPaymentAcceptanceMarkSrc(), alt: $t('Acceptance Mark')}"
+                 class="payment-icon"/>
+            <!-- PayGate Logo -->
+            <span data-bind="text: getTitle()"></span>
+        </label>
+    </div>
+    <div class="payment-method-content">
+	
+		<!-- ko if: (isVaultEnabled() != 0)-->
+			<!-- ko if:(checkSavedCard() <= 0) -->
+				<div name="payment-token" style="margin-bottom:20px;">
+					<input type="checkbox" 
+						name="paygate-payvault-method" 
+						id="paygate-payvault-method" 
+						value="true"/>
+					<label class="label" data-bind="attr: {'for': getCode() + '_enable_vault'}">
+						<span><!-- ko i18n: 'Remember my credit card number'--><!-- /ko --></span>
+					</label>
+				</div>
+			<!-- /ko -->
+			
+			<!-- ko if:(checkSavedCard() > 0) -->
+				<div class="saved_cards">
+					<select name="saved_cards" id="saved_cards" >
+						<!-- ko foreach: { data: JSON.parse(getSavedCardList()), as: 'card' } -->
+							<option data-bind="attr: {'value': card.token}">
+								<!-- ko i18n: "Use " --><!-- /ko -->
+								<!-- ko i18n: card.card_type --><!-- /ko -->
+								<!-- ko i18n: " ending in " --><!-- /ko -->
+								<!-- ko i18n: card.masked_cc --><!-- /ko -->
+							</option>
+						<!-- /ko -->
+						<option data-bind="attr: {'value': 'new-save'}"><!-- ko i18n: "Use a new Card" --><!-- /ko --></option>
+						<option data-bind="attr: {'value': 'new'}"><!-- ko i18n: "Use a new Card & don't save" --><!-- /ko --></option>
+					</select>
+				</div>
+			<!-- /ko -->
+		
+		<!-- /ko -->
+		
+		<!-- ko if:(paymentTypesEnabled() != 0) -->
+		<div class="payment-types" style="margin-bottom:20px;">
+			<label class="label" style="font-size:15px;font-weight:bold;margin-bottom:10px;">
+				<span><!-- ko i18n: 'Select Payment Type: ' --><!-- /ko --></span>
+			</label>
+			<br/>
+			<ul class="types" style="margin-top:10px;">
+				<!-- ko foreach: { data: JSON.parse(getPaymentTypesList()), as: 'option' } -->
+				<li class="option-type" style="margin-bottom:5px;">
+					<ul>
+						<li class="label-attr">
+							<input type="radio" class="paygate-payment-type" name="payment-type" data-bind="attr: {'value': option.value}" checked="checked" />
+							<label class="label">
+								<span><!-- ko i18n: option.label --><!-- /ko --></span>
+							</label>
+						</li>
+						<li class="img-attr">
+							<img alt="" data-bind="attr: {'src': option.image}" width="100"/>
+						</li>
+					</ul>
+				</li>
+				<!-- /ko -->
+			</ul>
+		</div>
+		<!-- /ko -->
+		
+		
+        <div class="payment-method-billing-address">
+            <!-- ko foreach: $parent.getRegion(getBillingAddressFormName()) -->
+            <!-- ko template: getTemplate() --><!-- /ko -->
+            <!--/ko-->
+        </div>
+
+        <div class="checkout-agreements-block">
+            <!-- ko foreach: $parent.getRegion('before-place-order') -->
+            <!-- ko template: getTemplate() --><!-- /ko -->
+            <!--/ko-->
+        </div>
+        <div class="actions-toolbar" style="display:block;">
+            <div class="primary">
+               <button id="paygateButton" class="action primary checkout"
+                        type="submit" data-bind="click: placeOrder,
+                        attr: {title: $t('Place Order')},
+                        css: {disabled: !isPlaceOrderActionAllowed()},
+                        enable: (getCode() == isChecked())" disabled>
+                    <span data-bind="text: $t('Place Order')"></span>
+                </button>
+				
+				
+            </div>
+        </div>
+    </div>
+</div>
