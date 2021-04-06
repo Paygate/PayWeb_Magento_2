@@ -1,0 +1,16 @@
+/*
+ * Copyright (c) 2021 PayGate (Pty) Ltd
+ *
+ * Author: App Inlet (Pty) Ltd
+ * 
+ * Released under the GNU General Public License
+ */
+/* payment types style */
+.payment-types ul{padding-left:0;}
+.payment-types li{list-style:none;}
+.payment-types li.option-type{    margin-bottom: 5px;  width: 100%;    float: left;}
+.payment-types ul ul li{float:left;}
+.payment-types ul li .input-type-attr{font-family: inherit}
+.payment-types ul li .label-attr{min-width:150px;}
+.payment-types ul li .img-attr{font-family: inherit}
+/* payment types style end */
