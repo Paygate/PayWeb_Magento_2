@@ -10,14 +10,26 @@
 namespace PayGate\PayWeb\Controller\Notify;
 
 use PayGate\PayWeb\Controller\AbstractPaygate;
+use PayGate\PayWeb\Model\PayGate;
 
 class Indexm220 extends AbstractPaygate
 {
+    /**
+     * @var \Magento\Framework\DB\Transaction
+     */
+    private $transactionModel;
 
     /**
      * indexAction
      *
      */
+
+    public function __construct(\Magento\Framework\App\Action\Context $context, \Magento\Framework\View\Result\PageFactory $pageFactory, \Magento\Customer\Model\Session $customerSession, \Magento\Checkout\Model\Session $checkoutSession, \Magento\Sales\Model\OrderFactory $orderFactory, \Magento\Framework\Session\Generic $paygateSession, \Magento\Framework\Url\Helper\Data $urlHelper, \Magento\Customer\Model\Url $customerUrl, \Psr\Log\LoggerInterface $logger, \Magento\Framework\DB\TransactionFactory $transactionFactory, \Magento\Sales\Model\Service\InvoiceService $invoiceService, \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender, PayGate $paymentMethod, \Magento\Framework\UrlInterface $urlBuilder, \Magento\Sales\Api\OrderRepositoryInterface $orderRepository, \Magento\Store\Model\StoreManagerInterface $storeManager, \Magento\Sales\Model\Order\Email\Sender\OrderSender $OrderSender, \Magento\Framework\Stdlib\DateTime\DateTime $date, \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory, \Magento\Sales\Model\Order\Payment\Transaction\Builder $_transactionBuilder,\Magento\Framework\DB\Transaction $transactionModel)
+    {
+        $this->transactionModel = $transactionModel;
+        parent::__construct($context, $pageFactory, $customerSession, $checkoutSession, $orderFactory, $paygateSession, $urlHelper, $customerUrl, $logger, $transactionFactory, $invoiceService, $invoiceSender, $paymentMethod, $urlBuilder, $orderRepository, $storeManager, $OrderSender, $date, $orderCollectionFactory, $_transactionBuilder);
+    }
+
     public function execute()
     {
         echo "OK";
@@ -91,41 +103,44 @@ class Indexm220 extends AbstractPaygate
             $order = $this->orderRepository->get( $reference );
             switch ( $status ) {
                 case 1:
-                    $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
-                    if ( $this->getConfigData( 'Successful_Order_status' ) != "" ) {
-                        $status = $this->getConfigData( 'Successful_Order_status' );
+                    $orderState = $order->getState();
+                    if ($orderState != \Magento\Sales\Model\Order::STATE_COMPLETE && $orderState != \Magento\Sales\Model\Order::STATE_PROCESSING) {
+                        $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
+                        if ( $this->getConfigData( 'Successful_Order_status' ) != "" ) {
+                            $status = $this->getConfigData( 'Successful_Order_status' );
+                        }
+
+                        $model                  = $this->_paymentMethod;
+                        $order_successful_email = $model->getConfigData( 'order_email' );
+
+                        if ( $order_successful_email != '0' ) {
+                            $this->OrderSender->send( $order );
+                            $order->addStatusHistoryComment( __( 'Notified customer about order #%1.', $order->getId() ) )->setIsCustomerNotified( true )->save();
+                        }
+
+                        // Capture invoice when payment is successfull
+                        $invoice = $this->_invoiceService->prepareInvoice( $order );
+                        $invoice->setRequestedCaptureCase( \Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE );
+                        $invoice->register();
+
+                        // Save the invoice to the order
+                        $transaction = $this->transactionModel
+                            ->addObject( $invoice )
+                            ->addObject( $invoice->getOrder() );
+
+                        $transaction->save();
+
+                        // Magento\Sales\Model\Order\Email\Sender\InvoiceSender
+                        $send_invoice_email = $model->getConfigData( 'invoice_email' );
+                        if ( $send_invoice_email != '0' ) {
+                            $this->invoiceSender->send( $invoice );
+                            $order->addStatusHistoryComment( __( 'Notified customer about invoice #%1.', $invoice->getId() ) )->setIsCustomerNotified( true )->save();
+                        }
+
+                        // Save Transaction Response
+                        $this->createTransaction( $order, $paygate_data );
+                        $order->setState( $status )->setStatus( $status )->save();
                     }
-
-                    $model                  = $this->_paymentMethod;
-                    $order_successful_email = $model->getConfigData( 'order_email' );
-
-                    if ( $order_successful_email != '0' ) {
-                        $this->OrderSender->send( $order );
-                        $order->addStatusHistoryComment( __( 'Notified customer about order #%1.', $order->getId() ) )->setIsCustomerNotified( true )->save();
-                    }
-
-                    // Capture invoice when payment is successfull
-                    $invoice = $this->_invoiceService->prepareInvoice( $order );
-                    $invoice->setRequestedCaptureCase( \Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE );
-                    $invoice->register();
-
-                    // Save the invoice to the order
-                    $transaction = $this->_objectManager->create( 'Magento\Framework\DB\Transaction' )
-                        ->addObject( $invoice )
-                        ->addObject( $invoice->getOrder() );
-
-                    $transaction->save();
-
-                    // Magento\Sales\Model\Order\Email\Sender\InvoiceSender
-                    $send_invoice_email = $model->getConfigData( 'invoice_email' );
-                    if ( $send_invoice_email != '0' ) {
-                        $this->invoiceSender->send( $invoice );
-                        $order->addStatusHistoryComment( __( 'Notified customer about invoice #%1.', $invoice->getId() ) )->setIsCustomerNotified( true )->save();
-                    }
-
-                    // Save Transaction Response
-                    $this->createTransaction( $order, $paygate_data );
-                    $order->setState( $status )->setStatus( $status )->save();
 
                     exit;
                     break;

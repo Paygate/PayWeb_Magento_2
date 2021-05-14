@@ -190,6 +190,8 @@ class PayGate extends \Magento\Payment\Model\Method\AbstractMethod
      * @var Payment
      */
     protected $payment;
+	
+    protected $_PaygateHelper;
 
     /**
      * @var PaymentTokenResourceModel
@@ -253,6 +255,7 @@ class PayGate extends \Magento\Payment\Model\Method\AbstractMethod
         PaymentTokenResourceModel $paymentTokenResourceModel,
         \Magento\Customer\Model\Session $session,
         \Magento\Vault\Api\PaymentTokenManagementInterface $paymentTokenManagementInterface,
+		\PayGate\PayWeb\Helper\Data  $PaygateHelper,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = [] ) {
@@ -271,6 +274,7 @@ class PayGate extends \Magento\Payment\Model\Method\AbstractMethod
         $this->paymentTokenManagementInterface = $paymentTokenManagementInterface;
         $this->encryptor                       = $encryptor;
         $this->paymentTokenResourceModel       = $paymentTokenResourceModel;
+        $this->_PaygateHelper       = $PaygateHelper;
 
         $parameters = ['params' => [$this->_code]];
 
@@ -381,7 +385,7 @@ class PayGate extends \Magento\Payment\Model\Method\AbstractMethod
         $orderData    = $order->getPayment()->getData();
         $saveCard     = "new-save";
         $dontsaveCard = "new";
-        $paymentType  = $orderData['additional_information']['paygate-payment-type'];
+        $paymentType  = isset($orderData['additional_information']) && isset($orderData['additional_information']['paygate-payment-type']) ? $orderData['additional_information']['paygate-payment-type'] : '0';
         $vaultId      = "";
         $vaultEnabled = 0;
         if ( $customerSession->isLoggedIn() && isset( $orderData['additional_information']['paygate-payvault-method'] ) ) {
@@ -433,8 +437,8 @@ class PayGate extends \Magento\Payment\Model\Method\AbstractMethod
             'COUNTRY'          => $country_code3,
             'EMAIL'            => $order->getData( 'customer_email' ),
         );
-
-        if ( $paymentType !== 0 && $vaultEnabled != 1 && $this->getConfigData( 'paygate_pay_method_active' ) != '0' ) {
+        
+        if ( $paymentType !== '0' && $this->getConfigData( 'paygate_pay_method_active' ) != '0' ) {
             $fields['PAY_METHOD']        = $this->getPaymentType( $paymentType );
             $fields['PAY_METHOD_DETAIL'] = $this->getPaymentTypeDetail( $paymentType );
         }
@@ -448,13 +452,20 @@ class PayGate extends \Magento\Payment\Model\Method\AbstractMethod
         } elseif ( $vaultEnabled === 0 || ( $vaultEnabled == $dontsaveCard ) ) {
             unset( $fields['VAULT'] );
             unset( $fields['VAULT_ID'] );
-        }
+        }elseif($vaultEnabled == 1 && empty($vaultId)){
+			$fields['VAULT']    = 1;
+		}elseif(!empty($vaultId)){
+			$fields['VAULT']    = 1;
+            $fields['VAULT_ID'] = $vaultId;
+		}
 
         $fields['CHECKSUM'] = md5( implode( '', $fields ) . $encryptionKey );
+		
 
         $response = $this->curlPost( 'https://secure.paygate.co.za/payweb3/initiate.trans', $fields );
 
         parse_str( $response, $result );
+		
         if ( isset( $result['ERROR'] ) ) {
             echo "Error Code: " . $result['ERROR'];
             $this->_checkoutSession->restoreQuote();
@@ -463,8 +474,9 @@ class PayGate extends \Magento\Payment\Model\Method\AbstractMethod
             exit( 0 );
 
         } else {
+			
             $processData = array();
-
+			$this->_PaygateHelper->createTransaction($order,$result);
             if ( strpos( $response, "ERROR" ) === false ) {
                 $processData = array(
                     'PAY_REQUEST_ID' => $result['PAY_REQUEST_ID'],

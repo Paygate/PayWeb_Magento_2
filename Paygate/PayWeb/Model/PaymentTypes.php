@@ -19,6 +19,10 @@ class PaymentTypes implements \Magento\Framework\Option\ArrayInterface
     {
         return array(
             [
+                'value' => 'CC',
+                'label' => "Card",
+            ],
+            [
                 'value' => 'BT',
                 'label' => "SiD Secure EFT",
             ],
@@ -41,10 +45,6 @@ class PaymentTypes implements \Magento\Framework\Option\ArrayInterface
             [
                 'value' => 'EW-MASTERPASS',
                 'label' => "MasterPass",
-            ],
-            [
-                'value' => 'CC',
-                'label' => "Card",
             ],
         );
     }

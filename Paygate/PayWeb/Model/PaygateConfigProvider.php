@@ -144,14 +144,16 @@ class PaygateConfigProvider implements ConfigProviderInterface
         if ( $customerSession->isLoggedIn() ) {
             $customerId = $customerSession->getCustomer()->getId();
             $cardList   = $paymentTokenManagement->getListByCustomerId( $customerId );
-            $cardCount  = count( $cardList );
             foreach ( $cardList as $card ) {
-                $cardDetails = json_decode( $card['details'] );
-                $cards[]     = array(
-                    'masked_cc' => $cardDetails->maskedCC,
-                    'token'     => $card['public_hash'],
-                    'card_type' => $cardDetails->type,
-                );
+				if($card['is_active'] == 1 && $card['is_visible'] == 1){
+					$cardDetails = json_decode( $card['details'] );
+					$cards[]     = array(
+						'masked_cc' => $cardDetails->maskedCC,
+						'token'     => $card['public_hash'],
+						'card_type' => $cardDetails->type,
+					);
+					$cardCount++;
+				}
             }
             $isVault = $this->config->isVault();
         } else {
@@ -194,6 +196,11 @@ class PaygateConfigProvider implements ConfigProviderInterface
         $enable_payment_types = explode( ',', $this->scopeConfig->getValue( $this->path . 'enable_payment_types', ScopeInterface::SCOPE_STORE, $storeId ) );
 
         $allTypes = array(
+            'CC'            => array(
+                'value' => 'CC',
+                'label' => "Card",
+                'image' => $this->getViewFileUrl( 'PayGate_PayWeb::images/mastercard-visa.svg' ),
+            ),
             'BT'            => array(
                 'value' => 'BT',
                 'label' => "SiD Secure EFT",
@@ -223,11 +230,6 @@ class PaygateConfigProvider implements ConfigProviderInterface
                 'value' => 'EW-MASTERPASS',
                 'label' => "MasterPass",
                 'image' => $this->getViewFileUrl( 'PayGate_PayWeb::images/masterpass.svg' ),
-            ),
-            'CC'            => array(
-                'value' => 'CC',
-                'label' => "Card",
-                'image' => $this->getViewFileUrl( 'PayGate_PayWeb::images/mastercard-visa.svg' ),
             ),
         );
 

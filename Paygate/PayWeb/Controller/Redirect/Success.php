@@ -9,6 +9,8 @@
 
 namespace PayGate\PayWeb\Controller\Redirect;
 
+use PayGate\PayWeb\Model\PayGate;
+
 /**
  * Responsible for loading page content.
  *
@@ -18,6 +20,27 @@ namespace PayGate\PayWeb\Controller\Redirect;
 
 class Success extends \PayGate\PayWeb\Controller\AbstractPaygate
 {
+    /**
+     * @var \Magento\Framework\DB\Transaction
+     */
+    private $transactionModel;
+    /**
+     * @var \Magento\Framework\App\Config\ScopeConfigInterface
+     */
+    private $scopeConfigInterface;
+    /**
+     * @var \Magento\Sales\Model\Order
+     */
+    private $orderModel;
+
+    public function __construct( \Magento\Framework\App\Action\Context $context, \Magento\Framework\View\Result\PageFactory $pageFactory, \Magento\Customer\Model\Session $customerSession, \Magento\Checkout\Model\Session $checkoutSession, \Magento\Sales\Model\OrderFactory $orderFactory, \Magento\Framework\Session\Generic $paygateSession, \Magento\Framework\Url\Helper\Data $urlHelper, \Magento\Customer\Model\Url $customerUrl, \Psr\Log\LoggerInterface $logger, \Magento\Framework\DB\TransactionFactory $transactionFactory, \Magento\Sales\Model\Service\InvoiceService $invoiceService, \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender, PayGate $paymentMethod, \Magento\Framework\UrlInterface $urlBuilder, \Magento\Sales\Api\OrderRepositoryInterface $orderRepository, \Magento\Store\Model\StoreManagerInterface $storeManager, \Magento\Sales\Model\Order\Email\Sender\OrderSender $OrderSender, \Magento\Framework\Stdlib\DateTime\DateTime $date, \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory, \Magento\Sales\Model\Order\Payment\Transaction\Builder $_transactionBuilder, \Magento\Sales\Model\Order $orderModel, \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface, \Magento\Framework\DB\Transaction $transactionModel )
+    {
+        $this->orderModel           = $orderModel;
+        $this->scopeConfigInterface = $scopeConfigInterface;
+        $this->transactionModel     = $transactionModel;
+        parent::__construct( $context, $pageFactory, $customerSession, $checkoutSession, $orderFactory, $paygateSession, $urlHelper, $customerUrl, $logger, $transactionFactory, $invoiceService, $invoiceSender, $paymentMethod, $urlBuilder, $orderRepository, $storeManager, $OrderSender, $date, $orderCollectionFactory, $_transactionBuilder );
+    }
+
     /**
      * Execute on paygate/redirect/success
      */
@@ -50,7 +73,27 @@ class Success extends \PayGate\PayWeb\Controller\AbstractPaygate
             }
 
             $order = $this->orderRepository->get( $order->getId() );
-            if ( isset( $data['TRANSACTION_STATUS'] ) ) {
+
+            $test_mode     = $this->scopeConfigInterface->getValue( 'payment/paygate/test_mode' );
+            $paygateId     = '10011072130';
+            $encryptionKey = 'secret';
+
+            if ( $test_mode != '1' ) {
+                $paygateId     = $this->scopeConfigInterface->getValue( 'payment/paygate/paygate_id' );
+                $encryptionKey = $this->scopeConfigInterface->getValue( 'payment/paygate/encryption_key' );
+            }
+
+            $pay_request_id = $data['PAY_REQUEST_ID'];
+            $status         = isset( $data['TRANSACTION_STATUS'] ) ? $data['TRANSACTION_STATUS'] : "";
+            $reference      = $order->getIncrementId();
+            $checksum       = isset( $data['CHECKSUM'] ) ? $data['CHECKSUM'] : "";
+
+            $checksum_source = $paygateId . $pay_request_id . $status . $reference . $encryptionKey;
+            $test_checksum   = md5( $checksum_source );
+
+            $validateChecksum = hash_equals( $checksum, $test_checksum );
+
+            if ( isset( $data['TRANSACTION_STATUS'] ) && $validateChecksum ) {
                 $status = $data['TRANSACTION_STATUS'];
                 switch ( $status ) {
                     case 1:
@@ -75,7 +118,7 @@ class Success extends \PayGate\PayWeb\Controller\AbstractPaygate
                             $invoice->register();
 
                             // Save the invoice to the order
-                            $transaction = $this->_objectManager->create( 'Magento\Framework\DB\Transaction' )
+                            $transaction = $this->transactionModel
                                 ->addObject( $invoice )
                                 ->addObject( $invoice->getOrder() );
 
@@ -119,13 +162,15 @@ class Success extends \PayGate\PayWeb\Controller\AbstractPaygate
                         echo $redirectToCartScript;
                         exit;
                         break;
-                    default:
-                        if ( $this->_paymentMethod->getConfigData( 'ipn_method' ) != '0' ) {
-                            // Save Transaction Response
-                            $this->createTransaction( $order, $data );
-                        }
-                        break;
                 }
+            } else {
+                $this->messageManager->addNotice( 'Transaction has been declined' );
+                $this->_checkoutSession->restoreQuote();
+                if ( $this->_paymentMethod->getConfigData( 'ipn_method' ) != '0' ) {
+                    $this->createTransaction( $order, $data );
+                    $order->setState( \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT )->setStatus( 'pending_payment' )->save();
+                }
+                echo $redirectToCartScript;
             }
         } catch ( \Exception $e ) {
             // Save Transaction Response
@@ -144,13 +189,11 @@ class Success extends \PayGate\PayWeb\Controller\AbstractPaygate
         $orderIncrementId = $order->getIncrementId();
 
         // If NOT test mode, use normal credentials
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $scopeConfig   = $objectManager->get( 'Magento\Framework\App\Config\ScopeConfigInterface' );
-        $test_mode     = $scopeConfig->getValue( 'payment/paygate/test_mode' );
+        $test_mode = $this->scopeConfigInterface->getValue( 'payment/paygate/test_mode' );
 
         if ( $test_mode != '1' ) {
-            $paygateId     = $scopeConfig->getValue( 'payment/paygate/paygate_id' );
-            $encryptionKey = $scopeConfig->getValue( 'payment/paygate/encryption_key' );
+            $paygateId     = $this->scopeConfigInterface->getValue( 'payment/paygate/paygate_id' );
+            $encryptionKey = $this->scopeConfigInterface->getValue( 'payment/paygate/encryption_key' );
         } else {
             $paygateId     = '10011072130';
             $encryptionKey = 'secret';
@@ -194,8 +237,7 @@ class Success extends \PayGate\PayWeb\Controller\AbstractPaygate
 
     public function getOrderByIncrementId( $incrementId )
     {
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        return $objectManager->get( '\Magento\Sales\Model\Order' )->loadByIncrementId( $incrementId );
+        return $this->orderModel->loadByIncrementId( $incrementId );
     }
 
     public function setlastOrderDetails()
