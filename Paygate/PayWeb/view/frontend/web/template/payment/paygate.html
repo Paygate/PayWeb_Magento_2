@@ -63,10 +63,10 @@
 			<br/>
 			<ul class="types" style="margin-top:10px;">
 				<!-- ko foreach: { data: JSON.parse(getPaymentTypesList()), as: 'option' } -->
-				<li class="option-type" style="margin-bottom:5px;">
+				<li class="option-type" style="margin-bottom:5px;" onclick="jQuery(this).find('input[name=payment-type]').prop('checked', true);">
 					<ul>
 						<li class="label-attr">
-							<input type="radio" class="paygate-payment-type" name="payment-type" data-bind="attr: {'value': option.value}" checked="checked" />
+							<input type="radio" class="paygate-payment-type" name="payment-type" data-bind="attr: {'value': option.value}" />
 							<label class="label">
 								<span><!-- ko i18n: option.label --><!-- /ko --></span>
 							</label>

@@ -1,6 +1,16 @@
 =========================================================================
 Date                Version     Description
 =========================================================================
+
+2021-05-14: v2.4.1 : Fix PayVault Card Delete.
+                     Transaction ID added for Pending orders after initiate.
+                     Cron schedule amended.
+                     Payment Types radio block fix for some themes.
+                     Remove object manager.
+                     Fix undefined index error $orderData['additional_information'].
+                     Order status to pending if checksum fails to pick up by cron.
+                     Don't update order status by IPN if already complete or processing.
+
 2021-04-06: v2.4.0 : Major rewrite to add support for Magento 2.4.x
                      Improve handling of spaces in PayGate ID.
                      Remove legacy iFrame code.

@@ -48,7 +48,7 @@ define(
 						payvault = 0;
 					}
 				}
-				if(null == paymentType){
+				if(null == paymentType || typeof paymentType == 'undefined'){
 					paymentType = 0;
 				}
 				
