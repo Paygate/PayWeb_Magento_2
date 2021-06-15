@@ -6,7 +6,12 @@
  *
  * Released under the GNU General Public License
  */
+
 namespace PayGate\PayWeb\Block\Payment;
+
+use Magento\Framework\View\Element\Template\Context;
+use Magento\Payment\Model\Config;
+use PayGate\PayWeb\Model\InfoFactory;
 
 /**
  * PayGate common payment info block
@@ -15,25 +20,25 @@ namespace PayGate\PayWeb\Block\Payment;
 class Info extends \Magento\Payment\Block\Info
 {
     /**
-     * @var \PayGate\PayWeb\Model\InfoFactory
+     * @var InfoFactory
      */
     protected $_PaygateInfoFactory;
 
     /**
-     * @param \Magento\Framework\View\Element\Template\Context $context
-     * @param \Magento\Payment\Model\Config $paymentConfig
-     * @param \PayGate\PayWeb\Model\InfoFactory $PaygateInfoFactory
+     * @param Context $context
+     * @param Config $paymentConfig
+     * @param InfoFactory $PaygateInfoFactory
      * @param array $data
      */
     public function __construct(
-        \Magento\Framework\View\Element\Template\Context $context,
-        \Magento\Payment\Model\Config $paymentConfig,
-        \PayGate\PayWeb\Model\InfoFactory $PaygateInfoFactory,
+        Context $context,
+        Config $paymentConfig,
+        InfoFactory $PaygateInfoFactory,
         array $data = []
     ) {
         $this->_PaygateInfoFactory = $PaygateInfoFactory;
         $this->_paymentConfig      = $paymentConfig;
-        parent::__construct( $context, $data );
+        parent::__construct($context, $data);
     }
 
 }

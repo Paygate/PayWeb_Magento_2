@@ -6,18 +6,26 @@
  *
  * Released under the GNU General Public License
  */
+
 ?>
-<h2><?php echo $this->escapeHtml( $this->getMessage() ); ?></h2>
+<h2><?php
+    echo $this->escapeHtml($this->getMessage()); ?></h2>
 <p>Redirecting to PayGate...</p>
-<form name="<?php echo $this->escapeHtml( $this->getName() ); ?>"
-      id="<?php echo $this->escapeHtml( $this->getId() ); ?>"
-      action="<?php echo $this->escapeHtml( $this->getFormAction() ); ?>"
+<form class="checkout" name="<?php
+echo $this->escapeHtml($this->getName()); ?>"
+      id="<?php
+      echo $this->escapeHtml($this->getId()); ?>"
+      action="<?php
+      echo $this->escapeHtml($this->getFormAction()); ?>"
       method="post" class="multicheckout">
-    <?php foreach ( $this->getFormData() as $item => $value ): ?>
-        <input type="hidden" name="<?php echo $this->escapeHtml( $item ); ?>" value="<?php echo $this->escapeHtml( $value ); ?>" size="200">
-    <?php endforeach;?>
-    <button type="submit" class="action primary">
-        Click here if you are not redirected within 10 seconds...
-    </button>
+    <?php
+    foreach ($this->getFormData() as $item => $value): ?>
+        <input type="hidden" name="<?php
+        echo $this->escapeHtml($item); ?>" value="<?php
+        echo $this->escapeHtml($value); ?>" size="200">
+    <?php
+    endforeach; ?>
+    <button type="hidden"></button>
 </form>
-<?php echo $this->getSubmitForm(); ?>
+<?php
+echo $this->getSubmitForm(); ?>

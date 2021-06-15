@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright (c) 2021 PayGate (Pty) Ltd
  *
@@ -6,8 +7,11 @@
  *
  * Released under the GNU General Public License
  */
-\Magento\Framework\Component\ComponentRegistrar::register(
-    \Magento\Framework\Component\ComponentRegistrar::MODULE,
+
+use Magento\Framework\Component\ComponentRegistrar;
+
+ComponentRegistrar::register(
+    ComponentRegistrar::MODULE,
     'PayGate_PayWeb',
     __DIR__
 );

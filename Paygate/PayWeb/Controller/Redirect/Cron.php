@@ -6,7 +6,11 @@
  *
  * Released under the GNU General Public License
  */
+
 namespace PayGate\PayWeb\Controller\Redirect;
+
+use Magento\Framework\View\Result\PageFactory;
+use PayGate\PayWeb\Controller\AbstractPaygate;
 
 /**
  * Responsible for loading page content.
@@ -14,10 +18,10 @@ namespace PayGate\PayWeb\Controller\Redirect;
  * This is a basic controller that only loads the corresponding layout file. It may duplicate other such
  * controllers, and thus it is considered tech debt. This code duplication will be resolved in future releases.
  */
-class Cron extends \PayGate\PayWeb\Controller\AbstractPaygate
+class Cron extends AbstractPaygate
 {
     /**
-     * @var \Magento\Framework\View\Result\PageFactory
+     * @var PageFactory
      */
     protected $resultPageFactory;
 

@@ -6,6 +6,7 @@
  *
  * Released under the GNU General Public License
  */
+
 namespace PayGate\PayWeb\Cron;
 
 use PayGate\PayWeb\Controller\Cron\Index as CronIndex;

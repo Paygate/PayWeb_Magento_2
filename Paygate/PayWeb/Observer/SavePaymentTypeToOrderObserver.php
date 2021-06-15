@@ -6,6 +6,7 @@
  *
  * Released under the GNU General Public License
  */
+
 namespace PayGate\PayWeb\Observer;
 
 use Magento\Framework\Event\Observer;
@@ -19,18 +20,19 @@ class SavePaymentTypeToOrderObserver extends AbstractDataAssignObserver
 
     /**
      * @param Observer $observer
+     *
      * @return void
      */
-    public function execute( Observer $observer )
+    public function execute(Observer $observer)
     {
-        $data = $this->readDataArgument( $observer );
+        $data = $this->readDataArgument($observer);
 
-        $additionalData = $data->getData( PaymentInterface::KEY_ADDITIONAL_DATA );
-        if ( !is_array( $additionalData ) || !isset( $additionalData[self::PAYGATE_PAYMENT_TYPE] ) ) {
+        $additionalData = $data->getData(PaymentInterface::KEY_ADDITIONAL_DATA);
+        if ( ! is_array($additionalData) || ! isset($additionalData[self::PAYGATE_PAYMENT_TYPE])) {
             return;
         }
 
-        $paymentInfo = $this->readPaymentModelArgument( $observer );
+        $paymentInfo = $this->readPaymentModelArgument($observer);
 
         $paymentInfo->setAdditionalInformation(
             self::PAYGATE_PAYMENT_TYPE,

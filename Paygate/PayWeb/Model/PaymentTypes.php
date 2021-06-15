@@ -9,7 +9,9 @@
 
 namespace PayGate\PayWeb\Model;
 
-class PaymentTypes implements \Magento\Framework\Option\ArrayInterface
+use Magento\Framework\Option\ArrayInterface;
+
+class PaymentTypes implements ArrayInterface
 {
 
     /**

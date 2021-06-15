@@ -18,10 +18,11 @@ class CardRenderer extends AbstractCardRenderer
      * Can render specified token
      *
      * @param PaymentTokenInterface $token
+     *
      * @return boolean
      * @since 100.1.0
      */
-    public function canRender( PaymentTokenInterface $token )
+    public function canRender(PaymentTokenInterface $token)
     {
         return $token->getPaymentMethodCode() === "paygate";
     }
@@ -50,7 +51,7 @@ class CardRenderer extends AbstractCardRenderer
      */
     public function getIconUrl()
     {
-        return $this->getIconForType( $this->getTokenDetails()['type'] )['url'];
+        return $this->getIconForType($this->getTokenDetails()['type'])['url'];
     }
 
     /**
@@ -59,7 +60,7 @@ class CardRenderer extends AbstractCardRenderer
      */
     public function getIconHeight()
     {
-        return $this->getIconForType( $this->getTokenDetails()['type'] )['height'];
+        return $this->getIconForType($this->getTokenDetails()['type'])['height'];
     }
 
     /**
@@ -68,6 +69,6 @@ class CardRenderer extends AbstractCardRenderer
      */
     public function getIconWidth()
     {
-        return $this->getIconForType( $this->getTokenDetails()['type'] )['width'];
+        return $this->getIconForType($this->getTokenDetails()['type'])['width'];
     }
 }

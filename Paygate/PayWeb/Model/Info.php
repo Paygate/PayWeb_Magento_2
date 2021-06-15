@@ -29,12 +29,12 @@ class Info
      * @return string
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    protected function _getValue( $value )
+    protected function _getValue($value)
     {
         $label       = '';
-        $outputValue = implode( ', ', (array) $value );
+        $outputValue = implode(', ', (array)$value);
 
-        return sprintf( '#%s%s', $outputValue, $outputValue == $label ? '' : ': ' . $label );
+        return sprintf('#%s%s', $outputValue, $outputValue == $label ? '' : ': ' . $label);
     }
 
 }
