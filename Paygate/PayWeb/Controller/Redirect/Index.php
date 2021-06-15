@@ -6,7 +6,14 @@
  *
  * Released under the GNU General Public License
  */
+
 namespace PayGate\PayWeb\Controller\Redirect;
+
+use Exception;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\View\Result\PageFactory;
+use PayGate\PayWeb\Controller\AbstractPaygate;
+use PayGate\PayWeb\Model\Config;
 
 /**
  * Responsible for loading page content.
@@ -14,20 +21,20 @@ namespace PayGate\PayWeb\Controller\Redirect;
  * This is a basic controller that only loads the corresponding layout file. It may duplicate other such
  * controllers, and thus it is considered tech debt. This code duplication will be resolved in future releases.
  */
-class Index extends \PayGate\PayWeb\Controller\AbstractPaygate
+class Index extends AbstractPaygate
 {
+    const CARTURL = "checkout/cart";
     /**
-     * @var \Magento\Framework\View\Result\PageFactory
+     * @var PageFactory
      */
     protected $resultPageFactory;
-
     /**
      * Config method type
      *
      * @var string
      */
-    protected $_configMethod = \PayGate\PayWeb\Model\Config::METHOD_CODE;
-    const CARTURL            = "checkout/cart";
+    protected $_configMethod = Config::METHOD_CODE;
+
     /**
      * Execute
      */
@@ -39,24 +46,24 @@ class Index extends \PayGate\PayWeb\Controller\AbstractPaygate
 
         try {
             $this->_initCheckout();
-        } catch ( \Magento\Framework\Exception\LocalizedException $e ) {
-            $this->_logger->error( $pre . $e->getMessage() );
-            $this->messageManager->addExceptionMessage( $e, $e->getMessage() );
-            $this->_redirect( self::CARTURL );
-        } catch ( \Exception $e ) {
-            $this->_logger->error( $pre . $e->getMessage() );
-            $this->messageManager->addExceptionMessage( $e, __( 'We can\'t start PayGate Checkout.' ) );
-            $this->_redirect( self::CARTURL );
+        } catch (LocalizedException $e) {
+            $this->_logger->error($pre . $e->getMessage());
+            $this->messageManager->addExceptionMessage($e, $e->getMessage());
+            $this->_redirect(self::CARTURL);
+        } catch (Exception $e) {
+            $this->_logger->error($pre . $e->getMessage());
+            $this->messageManager->addExceptionMessage($e, __('We can\'t start PayGate Checkout.'));
+            $this->_redirect(self::CARTURL);
         }
 
         $block = $page_object->getLayout()
-            ->getBlock( 'paygate' )
-            ->setPaymentFormData( isset( $order ) ? $order : null );
+                             ->getBlock('paygate')
+                             ->setPaymentFormData(isset($order) ? $order : null);
 
         $formData = $block->getFormData();
-        if ( !$formData ) {
-            $this->_logger->error( "We can\'t start PayGate Checkout." );
-            $this->_redirect( self::CARTURL );
+        if ( ! $formData) {
+            $this->_logger->error("We can\'t start PayGate Checkout.");
+            $this->_redirect(self::CARTURL);
         }
 
         return $page_object;

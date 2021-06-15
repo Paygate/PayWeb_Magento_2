@@ -4,80 +4,99 @@
  * Copyright (c) 2021 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
- * 
+ *
  * Released under the GNU General Public License
  */
 -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
     <system>
         <section id="payment">
-            <group id="paygate" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="paygate" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
                 <label>PayGate PayWeb3</label>
-                <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
                     <label>Enabled</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="title" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="title" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
                     <label>Title</label>
                 </field>
-                <field id="paygate_id" translate="label" type="text" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="paygate_id" translate="label" type="text" sortOrder="3" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
                     <label>PayGate ID</label>
                 </field>
-                <field id="encryption_key" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="encryption_key" translate="label" type="text" sortOrder="4" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
                     <label>Encryption Key</label>
                 </field>
-                <field id="test_mode" translate="label" type="select" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="test_mode" translate="label" type="select" sortOrder="5" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
                     <label>Test Mode</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="ipn_method" translate="label" type="select" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="ipn_method" translate="label" type="select" sortOrder="6" showInDefault="1" showInWebsite="1"
+                       showInStore="0">
                     <label>Disable IPN</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Disable IPN notify method and use redirect method instead.</comment>
                 </field>
-                <field id="allowed_carrier" translate="label" type="multiselect" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="allowed_carrier" translate="label" type="multiselect" sortOrder="7" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
                     <label>Allowed Shipping Methods</label>
                     <source_model>Magento\Shipping\Model\Config\Source\Allmethods</source_model>
                 </field>
-                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="8" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
                     <label>Payment from Applicable Countries</label>
                     <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
                 </field>
-                <field id="specificcountry" translate="label" type="multiselect" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="9" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
                     <label>Payment from Specific Countries</label>
                     <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
                     <can_be_empty>1</can_be_empty>
                 </field>
-                <field id="instructions" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="instructions" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
                     <label>Instructions</label>
                 </field>
-                <field id="order_email" translate="label" type="select" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="order_email" translate="label" type="select" sortOrder="11" showInDefault="1"
+                       showInWebsite="1" showInStore="0">
                     <label>Send Order Email</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Select "Yes" to Notify Users when successful order is created</comment>
                 </field>
-                <field id="invoice_email" translate="label" type="select" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="invoice_email" translate="label" type="select" sortOrder="12" showInDefault="1"
+                       showInWebsite="1" showInStore="0">
                     <label>Send Invoice Email</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Select "Yes" to Notify Users when successful invoice is created</comment>
                 </field>
-                <field id="sort_order" translate="label" type="text" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="sort_order" translate="label" type="text" sortOrder="13" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
                 </field>
-				<field id="paygate_cc_vault_active" translate="label" type="select" sortOrder="14" showInDefault="1" showInWebsite="1" showInStore="0">
-					<label>Enable PayVault on Checkout</label>
-					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-				</field>
-				<field id="paygate_pay_method_active" translate="label" type="select" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
-					<label>Enable Payment Types on Checkout</label>
-					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-				</field>
-				<field id="enable_payment_types" translate="label comment" type="multiselect" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="1">
-					<label>Select Payment Types to show on Checkout</label>
-					<source_model>PayGate\PayWeb\Model\PaymentTypes</source_model>
-				</field>
-                <field id="Successful_Order_status" translate="label" type="select" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="paygate_cc_vault_active" translate="label" type="select" sortOrder="14" showInDefault="1"
+                       showInWebsite="1" showInStore="0">
+                    <label>Enable PayVault on Checkout</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="paygate_pay_method_active" translate="label" type="select" sortOrder="15" showInDefault="1"
+                       showInWebsite="1" showInStore="0">
+                    <label>Enable Payment Types on Checkout</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="enable_payment_types" translate="label comment" type="multiselect" sortOrder="16"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Select Payment Types to show on Checkout</label>
+                    <source_model>PayGate\PayWeb\Model\PaymentTypes</source_model>
+                </field>
+                <field id="Successful_Order_status" translate="label" type="select" sortOrder="17" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
                     <label>Successful Order Status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
                 </field>

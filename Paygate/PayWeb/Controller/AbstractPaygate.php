@@ -9,8 +9,8 @@
 
 namespace PayGate\PayWeb\Controller;
 
-if ( interface_exists( "Magento\Framework\App\CsrfAwareActionInterface" ) ) {
-    class_alias( 'PayGate\PayWeb\Controller\AbstractPaygatem230', 'PayGate\PayWeb\Controller\AbstractPaygate' );
+if (interface_exists("Magento\Framework\App\CsrfAwareActionInterface")) {
+    class_alias('PayGate\PayWeb\Controller\AbstractPaygatem230', 'PayGate\PayWeb\Controller\AbstractPaygate');
 } else {
-    class_alias( 'PayGate\PayWeb\Controller\AbstractPaygatem220', 'PayGate\PayWeb\Controller\AbstractPaygate' );
+    class_alias('PayGate\PayWeb\Controller\AbstractPaygatem220', 'PayGate\PayWeb\Controller\AbstractPaygate');
 }

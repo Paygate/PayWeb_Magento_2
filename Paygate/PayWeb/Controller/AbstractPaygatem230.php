@@ -10,8 +10,8 @@
 namespace PayGate\PayWeb\Controller;
 
 use Magento\Framework\App\CsrfAwareActionInterface;
-use Magento\Framework\App\RequestInterface;
 use Magento\Framework\App\Request\InvalidRequestException;
+use Magento\Framework\App\RequestInterface;
 
 /**
  * Checkout Controller
@@ -24,14 +24,14 @@ abstract class AbstractPaygatem230 extends AbstractPaygatem220 implements CsrfAw
      */
     public function createCsrfValidationException(
         RequestInterface $request
-    ):  ? InvalidRequestException {
+    ): ?InvalidRequestException {
         return null;
     }
 
     /**
      * @inheritDoc
      */
-    public function validateForCsrf( RequestInterface $request ) :  ? bool
+    public function validateForCsrf(RequestInterface $request): ?bool
     {
         return true;
     }

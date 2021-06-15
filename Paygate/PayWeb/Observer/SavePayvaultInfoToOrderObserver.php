@@ -6,6 +6,7 @@
  *
  * Released under the GNU General Public License
  */
+
 namespace PayGate\PayWeb\Observer;
 
 use Magento\Framework\Event\Observer;
@@ -19,23 +20,23 @@ class SavePayvaultInfoToOrderObserver extends AbstractDataAssignObserver
 
     /**
      * @param Observer $observer
+     *
      * @return void
      */
-    public function execute( Observer $observer )
+    public function execute(Observer $observer)
     {
-        $data = $this->readDataArgument( $observer );
+        $data = $this->readDataArgument($observer);
 
-        $additionalData = $data->getData( PaymentInterface::KEY_ADDITIONAL_DATA );
-        if ( !is_array( $additionalData ) || !isset( $additionalData[self::PAYVAULT_NAME_INDEX] ) ) {
+        $additionalData = $data->getData(PaymentInterface::KEY_ADDITIONAL_DATA);
+        if ( ! is_array($additionalData) || ! isset($additionalData[self::PAYVAULT_NAME_INDEX])) {
             return;
         }
 
-        $paymentInfo = $this->readPaymentModelArgument( $observer );
+        $paymentInfo = $this->readPaymentModelArgument($observer);
 
         $paymentInfo->setAdditionalInformation(
             self::PAYVAULT_NAME_INDEX,
             $additionalData[self::PAYVAULT_NAME_INDEX]
         );
-
     }
 }

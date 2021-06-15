@@ -9,25 +9,30 @@
 
 namespace PayGate\PayWeb\Helper;
 
+use Magento\Framework\App\Config\BaseFactory;
+use Magento\Framework\App\Helper\AbstractHelper;
+use Magento\Framework\App\Helper\Context;
+use Psr\Log\LoggerInterface;
+
 /**
  * PayGate Data helper
  */
-class Cron extends \Magento\Framework\App\Helper\AbstractHelper
+class Cron extends AbstractHelper
 {
 
     /**
-     * @var \Psr\Log\LoggerInterface
+     * @var LoggerInterface
      */
     protected $_logger;
 
     /**
-     * @param \Magento\Framework\App\Helper\Context $context
+     * @param Context $context
      * @param \Magento\Payment\Helper\Data $paymentData
-     * @param \Magento\Framework\App\Config\BaseFactory $configFactory
+     * @param BaseFactory $configFactory
      * @param array $methodCodes
      */
     public function __construct(
-        \Magento\Framework\App\Helper\Context $context
+        Context $context
     ) {
         $this->_logger = $context->getLogger();
     }

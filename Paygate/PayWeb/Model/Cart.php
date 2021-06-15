@@ -6,7 +6,10 @@
  *
  * Released under the GNU General Public License
  */
+
 namespace PayGate\PayWeb\Model;
+
+use Magento\Payment\Model\Cart\SalesModel\SalesModelInterface;
 
 /**
  * Paygate-specific model for shopping cart items and totals
@@ -28,14 +31,14 @@ class Cart extends \Magento\Payment\Model\Cart
     {
         $this->_collectItemsAndAmounts();
 
-        if ( !$this->_areAmountsValid ) {
+        if ( ! $this->_areAmountsValid) {
             $subtotal = $this->getSubtotal() + $this->getTax();
 
-            if ( empty( $this->_transferFlags[self::AMOUNT_SHIPPING] ) ) {
+            if (empty($this->_transferFlags[self::AMOUNT_SHIPPING])) {
                 $subtotal += $this->getShipping();
             }
 
-            if ( empty( $this->_transferFlags[self::AMOUNT_DISCOUNT] ) ) {
+            if (empty($this->_transferFlags[self::AMOUNT_DISCOUNT])) {
                 $subtotal -= $this->getDiscount();
             }
 
@@ -46,6 +49,22 @@ class Cart extends \Magento\Payment\Model\Cart
     }
 
     /**
+     * Check whether any item has negative amount
+     *
+     * @return bool
+     */
+    public function hasNegativeItemAmount()
+    {
+        foreach ($this->_customItems as $item) {
+            if ($item->getAmount() < 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Calculate subtotal from custom items
      *
      * @return void
@@ -53,7 +72,7 @@ class Cart extends \Magento\Payment\Model\Cart
     protected function _calculateCustomItemsSubtotal()
     {
         parent::_calculateCustomItemsSubtotal();
-        $this->_applyDiscountTaxCompensationWorkaround( $this->_salesModel );
+        $this->_applyDiscountTaxCompensationWorkaround($this->_salesModel);
 
         $this->_validate();
     }
@@ -68,23 +87,23 @@ class Cart extends \Magento\Payment\Model\Cart
         $areItemsValid          = false;
         $this->_areAmountsValid = false;
 
-        $referenceAmount = $this->_salesModel->getDataUsingMethod( 'base_grand_total' );
+        $referenceAmount = $this->_salesModel->getDataUsingMethod('base_grand_total');
 
         $itemsSubtotal = 0;
-        foreach ( $this->getAllItems() as $i ) {
+        foreach ($this->getAllItems() as $i) {
             $itemsSubtotal = $itemsSubtotal + $i->getQty() * $i->getAmount();
         }
 
         $sum = $itemsSubtotal + $this->getTax();
 
-        if ( empty( $this->_transferFlags[self::AMOUNT_SHIPPING] ) ) {
+        if (empty($this->_transferFlags[self::AMOUNT_SHIPPING])) {
             $sum += $this->getShipping();
         }
 
-        if ( empty( $this->_transferFlags[self::AMOUNT_DISCOUNT] ) ) {
+        if (empty($this->_transferFlags[self::AMOUNT_DISCOUNT])) {
             $sum -= $this->getDiscount();
             // PayGate requires to have discount less than items subtotal
-            $this->_areAmountsValid = round( $this->getDiscount(), 4 ) < round( $itemsSubtotal, 4 );
+            $this->_areAmountsValid = round($this->getDiscount(), 4) < round($itemsSubtotal, 4);
         } else {
             $this->_areAmountsValid = $itemsSubtotal > 0.00001;
         }
@@ -94,13 +113,13 @@ class Cart extends \Magento\Payment\Model\Cart
          * see http://php.net/float
          */
         // Match sum of all the items and totals to the reference amount
-        if ( sprintf( '%.4F', $sum ) == sprintf( '%.4F', $referenceAmount ) ) {
+        if (sprintf('%.4F', $sum) == sprintf('%.4F', $referenceAmount)) {
             $areItemsValid = true;
         }
 
         $areItemsValid = $areItemsValid && $this->_areAmountsValid;
 
-        if ( !$areItemsValid ) {
+        if ( ! $areItemsValid) {
             $this->_salesModelItems = [];
             $this->_customItems     = [];
         }
@@ -115,8 +134,8 @@ class Cart extends \Magento\Payment\Model\Cart
     {
         $this->_salesModelItems = [];
 
-        foreach ( $this->_salesModel->getAllItems() as $item ) {
-            if ( $item->getParentItem() ) {
+        foreach ($this->_salesModel->getAllItems() as $item) {
+            if ($item->getParentItem()) {
                 continue;
             }
 
@@ -126,7 +145,7 @@ class Cart extends \Magento\Payment\Model\Cart
             $subAggregatedLabel = '';
 
             // Workaround in case if item subtotal precision is not compatible with PayGate (.2)
-            if ( $amount - round( $amount, 2 ) ) {
+            if ($amount - round($amount, 2)) {
                 $amount             = $amount * $qty;
                 $subAggregatedLabel = ' x' . $qty;
                 $qty                = 1;
@@ -134,8 +153,8 @@ class Cart extends \Magento\Payment\Model\Cart
 
             // Aggregate item price if item qty * price does not match row total
             $itemBaseRowTotal = $item->getOriginalItem()->getBaseRowTotal();
-            if ( $amount * $qty != $itemBaseRowTotal ) {
-                $amount             = (double) $itemBaseRowTotal;
+            if ($amount * $qty != $itemBaseRowTotal) {
+                $amount             = (double)$itemBaseRowTotal;
                 $subAggregatedLabel = ' x' . $qty;
                 $qty                = 1;
             }
@@ -147,10 +166,10 @@ class Cart extends \Magento\Payment\Model\Cart
             );
         }
 
-        $this->addSubtotal( $this->_salesModel->getBaseSubtotal() );
-        $this->addTax( $this->_salesModel->getBaseTaxAmount() );
-        $this->addShipping( $this->_salesModel->getBaseShippingAmount() );
-        $this->addDiscount( abs( $this->_salesModel->getBaseDiscountAmount() ) );
+        $this->addSubtotal($this->_salesModel->getBaseSubtotal());
+        $this->addTax($this->_salesModel->getBaseTaxAmount());
+        $this->addShipping($this->_salesModel->getBaseShippingAmount());
+        $this->addDiscount(abs($this->_salesModel->getBaseDiscountAmount()));
     }
 
     /**
@@ -170,29 +189,15 @@ class Cart extends \Magento\Payment\Model\Cart
      * - Run shopping cart and estimate shipping
      * - Go to PayGate
      *
-     * @param \Magento\Payment\Model\Cart\SalesModel\SalesModelInterface $salesEntity
+     * @param SalesModelInterface $salesEntity
+     *
      * @return void
      */
     protected function _applyDiscountTaxCompensationWorkaround(
-        \Magento\Payment\Model\Cart\SalesModel\SalesModelInterface $salesEntity
+        SalesModelInterface $salesEntity
     ) {
         $dataContainer = $salesEntity->getTaxContainer();
-        $this->addTax( (double) $dataContainer->getBaseDiscountTaxCompensationAmount() );
-        $this->addTax( (double) $dataContainer->getBaseShippingDiscountTaxCompensationAmnt() );
-    }
-
-    /**
-     * Check whether any item has negative amount
-     *
-     * @return bool
-     */
-    public function hasNegativeItemAmount()
-    {
-        foreach ( $this->_customItems as $item ) {
-            if ( $item->getAmount() < 0 ) {
-                return true;
-            }
-        }
-        return false;
+        $this->addTax((double)$dataContainer->getBaseDiscountTaxCompensationAmount());
+        $this->addTax((double)$dataContainer->getBaseShippingDiscountTaxCompensationAmnt());
     }
 }
