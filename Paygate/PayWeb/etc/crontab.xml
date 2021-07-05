@@ -12,7 +12,7 @@
         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
     <group id="default">
         <job instance="PayGate\PayWeb\Cron\CronQuery" method="execute" name="paygate_payweb_query">
-            <schedule>*/60 * * * *</schedule>
+            <schedule>*/10 * * * *</schedule>
         </job>
     </group>
 </config>
