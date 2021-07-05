@@ -438,7 +438,7 @@ class PayGate extends AbstractMethod
                 'paygate/notify',
                 array('_secure' => true)
             ) . '?eid=' . $entityOrderId;
-        $fields['USER3']      = 'magento2-v2.4.2';
+        $fields['USER3']      = 'magento2-v2.4.3';
 
         if ( ! empty($vaultId) && ($vaultEnabled == 1 || ($vaultEnabled == $saveCard)) && ($vaultEnabled !== 0)) {
             $fields['VAULT']    = 1;
