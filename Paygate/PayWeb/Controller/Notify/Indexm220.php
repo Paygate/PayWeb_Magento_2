@@ -170,60 +170,65 @@ class Indexm220 extends AbstractPaygate
             $orderId = $this->getRequest()->getParam('eid');
             $order   = $this->orderRepository->get($orderId);
 
-            switch ($status) {
-                case 1:
-                    $orderState = $order->getState();
-                    if ($orderState != Order::STATE_COMPLETE && $orderState != Order::STATE_PROCESSING) {
-                        $status = Order::STATE_PROCESSING;
-                        if ($this->getConfigData('Successful_Order_status') != "") {
-                            $status = $this->getConfigData('Successful_Order_status');
+            if ($order->getPaywebPaymentProcessed() == 1) {
+                $this->_logger->debug('IPN ORDER ALREADY BEING PROCESSED');
+            } else {
+                $order->setPaywebPaymentProcessed(1)->save();
+                switch ($status) {
+                    case 1:
+                        $orderState = $order->getState();
+                        if ($orderState != Order::STATE_COMPLETE && $orderState != Order::STATE_PROCESSING) {
+                            $status = Order::STATE_PROCESSING;
+                            if ($this->getConfigData('Successful_Order_status') != "") {
+                                $status = $this->getConfigData('Successful_Order_status');
+                            }
+
+                            $model                  = $this->_paymentMethod;
+                            $order_successful_email = $model->getConfigData('order_email');
+
+                            if ($order_successful_email != '0') {
+                                $this->OrderSender->send($order);
+                                $order->addStatusHistoryComment(
+                                    __('Notified customer about order #%1.', $order->getId())
+                                )->setIsCustomerNotified(true)->save();
+                            }
+
+                            // Capture invoice when payment is successfull
+                            $invoice = $this->_invoiceService->prepareInvoice($order);
+                            $invoice->setRequestedCaptureCase(Invoice::CAPTURE_ONLINE);
+                            $invoice->register();
+
+                            // Save the invoice to the order
+                            $transaction = $this->transactionModel
+                                ->addObject($invoice)
+                                ->addObject($invoice->getOrder());
+
+                            $transaction->save();
+
+                            // Magento\Sales\Model\Order\Email\Sender\InvoiceSender
+                            $send_invoice_email = $model->getConfigData('invoice_email');
+                            if ($send_invoice_email != '0') {
+                                $this->invoiceSender->send($invoice);
+                                $order->addStatusHistoryComment(
+                                    __('Notified customer about invoice #%1.', $invoice->getId())
+                                )->setIsCustomerNotified(true)->save();
+                            }
+
+                            // Save Transaction Response
+                            $this->createTransaction($order, $paygate_data);
+                            $order->setState($status)->setStatus($status)->save();
                         }
 
-                        $model                  = $this->_paymentMethod;
-                        $order_successful_email = $model->getConfigData('order_email');
-
-                        if ($order_successful_email != '0') {
-                            $this->OrderSender->send($order);
-                            $order->addStatusHistoryComment(
-                                __('Notified customer about order #%1.', $order->getId())
-                            )->setIsCustomerNotified(true)->save();
-                        }
-
-                        // Capture invoice when payment is successfull
-                        $invoice = $this->_invoiceService->prepareInvoice($order);
-                        $invoice->setRequestedCaptureCase(Invoice::CAPTURE_ONLINE);
-                        $invoice->register();
-
-                        // Save the invoice to the order
-                        $transaction = $this->transactionModel
-                            ->addObject($invoice)
-                            ->addObject($invoice->getOrder());
-
-                        $transaction->save();
-
-                        // Magento\Sales\Model\Order\Email\Sender\InvoiceSender
-                        $send_invoice_email = $model->getConfigData('invoice_email');
-                        if ($send_invoice_email != '0') {
-                            $this->invoiceSender->send($invoice);
-                            $order->addStatusHistoryComment(
-                                __('Notified customer about invoice #%1.', $invoice->getId())
-                            )->setIsCustomerNotified(true)->save();
-                        }
-
+                        exit;
+                        break;
+                    case 0:
+                    default:
                         // Save Transaction Response
                         $this->createTransaction($order, $paygate_data);
-                        $order->setState($status)->setStatus($status)->save();
-                    }
-
-                    exit;
-                    break;
-                case 0:
-                default:
-                    // Save Transaction Response
-                    $this->createTransaction($order, $paygate_data);
-                    $order->cancel()->save();
-                    exit;
-                    break;
+                        $order->cancel()->save();
+                        exit;
+                        break;
+                }
             }
         } else {
             $this->_logger->debug('IPN NOT START');

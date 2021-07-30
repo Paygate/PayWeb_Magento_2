@@ -2,6 +2,12 @@
 Date                Version     Description
 =========================================================================
 
+2021-07-30: v2.4.4 : Consolidate Cron class into single file for Magento 2.4.x.
+                     Block double order processing on multiple requests.
+                     Add API support for PayGate payment gateway.
+                     Improve multisite scope handling for Fetch and Cron.
+                     Add support for Store Credit if available (getTotalDue).
+
 2021-07-05: v2.4.3 : Increase cron schedule to query every 10 minutes.
 
 2021-06-15: v2.4.2 : Fix cron query method not firing as expected on some configurations.

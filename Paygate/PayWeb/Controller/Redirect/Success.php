@@ -44,6 +44,10 @@ use Psr\Log\LoggerInterface;
 class Success extends AbstractPaygate
 {
     /**
+     * @var PayGate $_paymentMethod
+     */
+    protected $_paymentMethod;
+    /**
      * @var Transaction
      */
     private $transactionModel;
@@ -84,6 +88,7 @@ class Success extends AbstractPaygate
         $this->orderModel           = $orderModel;
         $this->scopeConfigInterface = $scopeConfigInterface;
         $this->transactionModel     = $transactionModel;
+
         parent::__construct(
             $context,
             $pageFactory,
@@ -118,10 +123,21 @@ class Success extends AbstractPaygate
         $data         = $this->getRequest()->getPostValue();
         $this->_order = $this->_checkoutSession->getLastRealOrder();
         $order        = $this->_order;
+
+        $baseurl                 = $this->_storeManager->getStore()->getBaseUrl();
+        $redirectToCartScript    = '<script>window.top.location.href="' . $baseurl . 'checkout/cart/";</script>';
+        $redirectToSuccessScript = '<script>window.top.location.href="' . $baseurl . 'checkout/onepage/success/";</script>';
+
         if ( ! $this->_order->getId()) {
             $this->setlastOrderDetails();
             $order = $this->_order;
         }
+
+        if ( ! ($this->_order->getId()) || ! isset($data['PAY_REQUEST_ID'])) {
+            echo $redirectToCartScript;
+            exit;
+        }
+
         try {
             $this->Notify($data);
         } catch (Exception $ex) {
@@ -129,25 +145,11 @@ class Success extends AbstractPaygate
         }
 
         $this->pageFactory->create();
-        $baseurl              = $this->_storeManager->getStore()->getBaseUrl();
-        $redirectToCartScript = '<script>window.top.location.href="' . $baseurl . 'checkout/cart/";</script>';
         try {
-            if ( ! $this->_order->getId()) {
-                // Redirect to Cart if Order not found
-                echo $redirectToCartScript;
-                exit;
-            }
-
             $order = $this->orderRepository->get($order->getId());
 
-            $test_mode     = $this->scopeConfigInterface->getValue('payment/paygate/test_mode');
-            $paygateId     = '10011072130';
-            $encryptionKey = 'secret';
-
-            if ($test_mode != '1') {
-                $paygateId     = $this->scopeConfigInterface->getValue('payment/paygate/paygate_id');
-                $encryptionKey = $this->scopeConfigInterface->getValue('payment/paygate/encryption_key');
-            }
+            $paygateId     = $this->_paymentMethod->getPaygateId();
+            $encryptionKey = $this->_paymentMethod->getEncryptionKey();
 
             $pay_request_id        = $data['PAY_REQUEST_ID'];
             $status                = isset($data['TRANSACTION_STATUS']) ? $data['TRANSACTION_STATUS'] : "";
@@ -161,11 +163,17 @@ class Success extends AbstractPaygate
             $validateChecksum = hash_equals($checksum, $test_checksum);
 
             if (isset($data['TRANSACTION_STATUS']) && $validateChecksum) {
-                $status = $data['TRANSACTION_STATUS'];
+                $status              = $data['TRANSACTION_STATUS'];
+                $canProcessThisOrder = $this->_paymentMethod->getConfigData(
+                        'ipn_method'
+                    ) != '0' && $order->getPaywebPaymentProcessed() != 1;
+                $api                 = $this->getRequest()->getParam('api');
+
                 switch ($status) {
                     case 1:
                         // Check if order process by IPN or Redirect
-                        if ($this->_paymentMethod->getConfigData('ipn_method') != '0') {
+                        if ($canProcessThisOrder) {
+                            $order->setPaywebPaymentProcessed(1)->save();
                             $status = Order::STATE_PROCESSING;
                             if ($this->getConfigData('Successful_Order_status') != "") {
                                 $status = $this->getConfigData('Successful_Order_status');
@@ -208,16 +216,17 @@ class Success extends AbstractPaygate
                         }
 
                         // Invoice capture code completed
-                        echo '<script>window.top.location.href="' . $baseurl . 'checkout/onepage/success/";</script>';
+                        echo $redirectToSuccessScript;
                         exit;
                         break;
                     case 2:
                         // Save Transaction Response
                         $this->messageManager->addNotice('Transaction has been declined.');
                         $this->_checkoutSession->restoreQuote();
-                        if ($this->_paymentMethod->getConfigData('ipn_method') != '0') {
+                        if ($canProcessThisOrder) {
+                            $order->setPaywebPaymentProcessed(1)->save();
                             $this->createTransaction($order, $data);
-                            $this->_order->cancel()->save();
+                            $order->cancel()->save();
                         }
                         echo $redirectToCartScript;
                         exit;
@@ -226,9 +235,10 @@ class Success extends AbstractPaygate
                     case 4:
                         $this->messageManager->addNotice('Transaction has been cancelled');
                         $this->_checkoutSession->restoreQuote();
-                        if ($this->_paymentMethod->getConfigData('ipn_method') != '0') {
+                        if ($canProcessThisOrder) {
+                            $order->setPaywebPaymentProcessed(1)->save();
                             $this->createTransaction($order, $data);
-                            $this->_order->cancel()->save();
+                            $order->cancel()->save();
                         }
                         echo $redirectToCartScript;
                         exit;
@@ -237,7 +247,8 @@ class Success extends AbstractPaygate
             } else {
                 $this->messageManager->addNotice('Transaction has been declined');
                 $this->_checkoutSession->restoreQuote();
-                if ($this->_paymentMethod->getConfigData('ipn_method') != '0') {
+                if ($canProcessThisOrder) {
+                    $order->setPaywebPaymentProcessed(1)->save();
                     $this->createTransaction($order, $data);
                     $order->setState(Order::STATE_PENDING_PAYMENT)->setStatus(
                         'pending_payment'
@@ -253,6 +264,7 @@ class Success extends AbstractPaygate
             echo $redirectToCartScript;
         }
 
+
         return '';
     }
 
@@ -262,16 +274,8 @@ class Success extends AbstractPaygate
         $order            = $this->_order;
         $orderIncrementId = $order->getIncrementId();
 
-        // If NOT test mode, use normal credentials
-        $test_mode = $this->scopeConfigInterface->getValue('payment/paygate/test_mode');
-
-        if ($test_mode != '1') {
-            $paygateId     = $this->scopeConfigInterface->getValue('payment/paygate/paygate_id');
-            $encryptionKey = $this->scopeConfigInterface->getValue('payment/paygate/encryption_key');
-        } else {
-            $paygateId     = '10011072130';
-            $encryptionKey = 'secret';
-        }
+        $paygateId     = $this->_paymentMethod->getPaygateId();
+        $encryptionKey = $this->_paymentMethod->getEncryptionKey();
 
         $data = array(
             'PAYGATE_ID'     => $paygateId,

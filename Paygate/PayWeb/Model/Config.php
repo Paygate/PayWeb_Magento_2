@@ -267,7 +267,6 @@ class Config extends AbstractConfig
     /**
      * Get payment types
      **/
-
     public function getPaymentTypes()
     {
         return $this->getConfig('enable_payment_types');
@@ -276,24 +275,47 @@ class Config extends AbstractConfig
     /**
      * Check Payment Types Enabled in admin or not
      **/
-
     public function isEnabledPaymenTypes()
     {
         return $this->getConfig('paygate_pay_method_active');
     }
 
     /**
-     * Get Api Credential for PayGate Payment
+     * Check is test mode or live
      **/
-
-    public function getApiCredentials()
+    public function isTestMode()
     {
-        $data                   = array();
-        $storeScope             = ScopeInterface::SCOPE_STORE;
-        $data['encryption_key'] = $this->getConfig('encryption_key');
-        $data['paygate_id']     = $this->getConfig('paygate_id');
+        if ($this->getConfig('test_mode') == '1') {
+            return true;
+        }
 
-        return $data;
+        return false;
+    }
+
+    /**
+     * Get Encryption key from configuration
+     **/
+    public function getEncryptionKey()
+    {
+        $encryptionKey = $this->getConfig('encryption_key');
+        if ($this->isTestMode()) {
+            $encryptionKey = 'secret';
+        }
+
+        return $encryptionKey;
+    }
+
+    /**
+     * Get Paygate id from configuration
+     **/
+    public function getPaygateId()
+    {
+        $paygateId = trim($this->getConfig('paygate_id'));
+        if ($this->isTestMode()) {
+            $paygateId = '10011072130';
+        }
+
+        return $paygateId;
     }
 
     /**
