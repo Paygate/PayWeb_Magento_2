@@ -171,9 +171,8 @@ class Data extends AbstractHelper
 
     public function getQueryResult($orderquery)
     {
-        $config         = $this->_paygateconfig->getApiCredentials();
-        $encryption_key = $config['encryption_key'];
-        $paygate_id     = $config['paygate_id'];
+        $encryption_key = $this->_paygateconfig->getEncryptionKey();
+        $paygate_id     = $this->_paygateconfig->getPaygateId();
 
         // Encryption key set in the Merchant Access Portal
         $encryptionKey  = "$encryption_key";

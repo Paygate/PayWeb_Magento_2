@@ -353,6 +353,30 @@ class PayGate extends AbstractMethod
     }
 
     /**
+     * Get Paygate id from configuration
+     **/
+    public function getPaygateId()
+    {
+        return $this->_config->getPaygateId();
+    }
+
+    /**
+     * Get Encryption key from configuration
+     **/
+    public function getEncryptionKey()
+    {
+        return $this->_config->getEncryptionKey();
+    }
+
+    /**
+     * Check is test mode or live
+     **/
+    public function isTestMode()
+    {
+        return $this->_config->isTestMode();
+    }
+
+    /**
      * This is where we compile data posted by the form to PayGate
      * @return array
      */
@@ -364,6 +388,7 @@ class PayGate extends AbstractMethod
         $order           = $this->_checkoutSession->getLastRealOrder();
         $customerSession = $this->session;
         $baseurl         = $this->_storeManager->getStore()->getBaseUrl();
+        $encryptionKey   = $this->_config->getEncryptionKey();
         if ( ! $order || $order->getPayment() == null) {
             echo '<script>window.top.location.href="' . $baseurl . 'checkout/cart/";</script>';
             exit();
@@ -389,56 +414,12 @@ class PayGate extends AbstractMethod
 
         $this->_logger->debug($pre . 'serverMode : ' . $this->getConfigData('test_mode'));
 
-        // If NOT test mode, use normal credentials
-        if ($this->getConfigData('test_mode') != '1') {
-            $paygateId     = trim($this->getConfigData('paygate_id'));
-            $encryptionKey = $this->getConfigData('encryption_key');
-        } else {
-            $paygateId     = '10011072130';
-            $encryptionKey = 'secret';
-        }
-
-        $billing       = $order->getBillingAddress();
-        $country_code2 = $billing->getCountryId();
-
-        $country_code3 = '';
-        if ($country_code2 != null || $country_code2 != '') {
-            $country_code3 = $this->getCountryDetails($country_code2);
-        }
-        if ($country_code3 == null || $country_code3 == '') {
-            $country_code3 = 'ZAF';
-        }
-        $DateTime = new DateTime();
-
-        $formKey       = $this->_formKey->getFormKey();
-        $realOrderId   = $order->getRealOrderId();
-        $entityOrderId = $order->getId();
-
-        $fields = array(
-            'PAYGATE_ID'       => $paygateId,
-            'REFERENCE'        => $realOrderId,
-            'AMOUNT'           => number_format($this->getTotalAmount($order), 2, '', ''),
-            'CURRENCY'         => $order->getOrderCurrencyCode(),
-            'RETURN_URL'       => $this->_urlBuilder->getUrl(
-                    'paygate/redirect/success',
-                    array(self::SECURE => true)
-                ) . '?form_key=' . $formKey . '&gid=' . $realOrderId,
-            'TRANSACTION_DATE' => $DateTime->format('Y-m-d H:i:s'),
-            'LOCALE'           => 'en-za',
-            'COUNTRY'          => $country_code3,
-            'EMAIL'            => $order->getData('customer_email'),
-        );
+        $fields = $this->prepareFields($order);
 
         if ($paymentType !== '0' && $this->getConfigData('paygate_pay_method_active') != '0') {
             $fields['PAY_METHOD']        = $this->getPaymentType($paymentType);
             $fields['PAY_METHOD_DETAIL'] = $this->getPaymentTypeDetail($paymentType);
         }
-
-        $fields['NOTIFY_URL'] = $this->_urlBuilder->getUrl(
-                'paygate/notify',
-                array('_secure' => true)
-            ) . '?eid=' . $entityOrderId;
-        $fields['USER3']      = 'magento2-v2.4.3';
 
         if ( ! empty($vaultId) && ($vaultEnabled == 1 || ($vaultEnabled == $saveCard)) && ($vaultEnabled !== 0)) {
             $fields['VAULT']    = 1;
@@ -454,7 +435,6 @@ class PayGate extends AbstractMethod
         }
 
         $fields['CHECKSUM'] = md5(implode('', $fields) . $encryptionKey);
-
 
         $response = $this->curlPost('https://secure.paygate.co.za/payweb3/initiate.trans', $fields);
 
@@ -479,6 +459,61 @@ class PayGate extends AbstractMethod
         }
 
         return ($processData);
+    }
+
+    public function prepareFields($order, $api = null)
+    {
+        $billing   = $order->getBillingAddress();
+        $formKey   = $this->_formKey->getFormKey();
+        $reference = $order->getRealOrderId();
+
+        $entityOrderId = $order->getId();
+
+        $country_code2 = $billing->getCountryId();
+        $country_code3 = '';
+        if ($country_code2 != null || $country_code2 != '') {
+            $country_code3 = $this->getCountryDetails($country_code2);
+        }
+        if ($country_code3 == null || $country_code3 == '') {
+            $country_code3 = 'ZAF';
+        }
+
+        $currency = $order->getOrderCurrencyCode();
+
+        $DateTime  = new DateTime();
+        $paygateId = $this->_config->getPaygateId();
+
+        if ( ! empty($order->getTotalDue())) {
+            $price = number_format($order->getTotalDue(), 2, '', '');
+        } else {
+            $price = number_format($this->getTotalAmount($order), 2, '', '');
+        }
+
+        if ($api) {
+            $reference .= "&api=true";
+        }
+
+        $fields = array(
+            'PAYGATE_ID'       => $paygateId,
+            'REFERENCE'        => $order->getRealOrderId(),
+            'AMOUNT'           => $price,
+            'CURRENCY'         => $currency,
+            'RETURN_URL'       => $this->_urlBuilder->getUrl(
+                    'paygate/redirect/success',
+                    array(self::SECURE => true)
+                ) . '?form_key=' . $formKey . '&gid=' . $reference,
+            'TRANSACTION_DATE' => $DateTime->format('Y-m-d H:i:s'),
+            'LOCALE'           => 'en-za',
+            'COUNTRY'          => $country_code3,
+            'EMAIL'            => $order->getCustomerEmail(),
+            'NOTIFY_URL'       => $this->_urlBuilder->getUrl(
+                    'paygate/notify',
+                    array('_secure' => true)
+                ) . '?eid=' . $entityOrderId,
+            'USER3'            => 'magento2-v2.4.4'
+        );
+
+        return $fields;
     }
 
     public function getPaymentTypeDetail($ptd)

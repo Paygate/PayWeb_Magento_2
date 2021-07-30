@@ -17,4 +17,7 @@
             </argument>
         </arguments>
     </type>
+    <preference for="PayGate\PayWeb\Api\PayWebApiManagementInterface"
+                type="PayGate\PayWeb\Model\Api\PayWebApiManagement"/>
+    <preference for="PayGate\PayWeb\Api\Data\PayWebApiInterface" type="PayGate\PayWeb\Model\PayWebApi"/>
 </config>
