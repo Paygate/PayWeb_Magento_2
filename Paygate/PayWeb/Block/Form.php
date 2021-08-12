@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2021 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
@@ -7,7 +7,7 @@
  * Released under the GNU General Public License
  */
 
-namespace PayGate\PayWeb\Block\PayGate;
+namespace PayGate\PayWeb\Block;
 
 use Magento\Customer\Helper\Session\CurrentCustomer;
 use Magento\Framework\Locale\ResolverInterface;
@@ -55,6 +55,12 @@ class Form extends \Magento\Payment\Block\Form
     protected $currentCustomer;
 
     /**
+     * @var LoggerInterface
+     */
+    protected $_logger;
+
+
+    /**
      * @param Context $context
      * @param ConfigFactory $paygateConfigFactory
      * @param ResolverInterface $localeResolver
@@ -70,7 +76,8 @@ class Form extends \Magento\Payment\Block\Form
         CurrentCustomer $currentCustomer,
         array $data = []
     ) {
-        $pre = __METHOD__ . " : ";
+        $this->_logger = $context->getLogger();
+        $pre           = __METHOD__ . " : ";
         $this->_logger->debug($pre . 'bof');
         $this->_paygateData         = $paygateData;
         $this->paygateConfigFactory = $paygateConfigFactory;

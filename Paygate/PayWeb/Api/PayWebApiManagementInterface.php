@@ -19,7 +19,7 @@ interface PayWebApiManagementInterface
      * @param int $quote_id Right hand operand.
      * @param int $quote_id
      *
-     * @return PayWebApiInterface
+     * @return string
      * @api
      *
      */

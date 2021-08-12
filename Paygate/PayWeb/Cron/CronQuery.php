@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2021 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
@@ -102,7 +102,6 @@ class CronQuery
         $this->transactionSearchResultInterfaceFactory = $transactionSearchResultInterfaceFactory;
         $this->_orderCollectionFactory                 = $orderCollectionFactory;
         $this->orderRepository                         = $orderRepository;
-
     }
 
     public function execute()

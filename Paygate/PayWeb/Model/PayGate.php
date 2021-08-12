@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2021 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
@@ -69,6 +69,7 @@ class PayGate extends AbstractMethod
     const MOBICRED_METHOD             = 'EW-MOBICRED';
     const MOMOPAY_METHOD              = 'EW-MOMOPAY';
     const MASTERPASS_METHOD           = 'EW-MASTERPASS';
+    const PAYPAL_METHOD               = 'EW-PAYPAL';
     const CREDIT_CARD_DESCRIPTION     = 'Card';
     const BANK_TRANSFER_DESCRIPTION   = 'SiD Secure EFT';
     const BANK_TRANSFER_METHOD_DETAIL = 'SID';
@@ -78,6 +79,7 @@ class PayGate extends AbstractMethod
     const MOMOPAY_DESCRIPTION         = 'MoMoPay';
     const MOMOPAY_METHOD_DETAIL       = 'Momopay';
     const MASTERPASS_DESCRIPTION      = 'MasterPass';
+    const PAYPAL_DESCRIPTION          = 'PayPal';
     const SECURE                      = '_secure';
     /**
      * @var string
@@ -232,6 +234,7 @@ class PayGate extends AbstractMethod
         self::MOBICRED_METHOD      => self::MOBICRED_DESCRIPTION,
         self::MOMOPAY_METHOD       => self::MOMOPAY_METHOD_DETAIL,
         self::MASTERPASS_METHOD    => self::MASTERPASS_DESCRIPTION,
+        self::PAYPAL_METHOD        => self::PAYPAL_DESCRIPTION,
     ];
 
     public function __construct(
@@ -382,9 +385,7 @@ class PayGate extends AbstractMethod
      */
     public function getStandardCheckoutFormFields()
     {
-        $pre = __METHOD__ . ' : ';
-        // Variable initialization
-
+        $pre             = __METHOD__ . ' : ';
         $order           = $this->_checkoutSession->getLastRealOrder();
         $customerSession = $this->session;
         $baseurl         = $this->_storeManager->getStore()->getBaseUrl();
@@ -393,10 +394,10 @@ class PayGate extends AbstractMethod
             echo '<script>window.top.location.href="' . $baseurl . 'checkout/cart/";</script>';
             exit();
         }
-        $orderData    = $order->getPayment()->getData();
+        $orderData = $order->getPayment()->getData();
+
         $saveCard     = "new-save";
         $dontsaveCard = "new";
-        $paymentType  = isset($orderData['additional_information']) && isset($orderData['additional_information']['paygate-payment-type']) ? $orderData['additional_information']['paygate-payment-type'] : '0';
         $vaultId      = "";
         $vaultEnabled = 0;
         if ($customerSession->isLoggedIn() && isset($orderData['additional_information']['paygate-payvault-method'])) {
@@ -415,11 +416,6 @@ class PayGate extends AbstractMethod
         $this->_logger->debug($pre . 'serverMode : ' . $this->getConfigData('test_mode'));
 
         $fields = $this->prepareFields($order);
-
-        if ($paymentType !== '0' && $this->getConfigData('paygate_pay_method_active') != '0') {
-            $fields['PAY_METHOD']        = $this->getPaymentType($paymentType);
-            $fields['PAY_METHOD_DETAIL'] = $this->getPaymentTypeDetail($paymentType);
-        }
 
         if ( ! empty($vaultId) && ($vaultEnabled == 1 || ($vaultEnabled == $saveCard)) && ($vaultEnabled !== 0)) {
             $fields['VAULT']    = 1;
@@ -492,6 +488,9 @@ class PayGate extends AbstractMethod
         if ($api) {
             $reference .= "&api=true";
         }
+        $orderData = $order->getPayment()->getData();
+
+        $paymentType = isset($orderData['additional_information']) && isset($orderData['additional_information']['paygate-payment-type']) ? $orderData['additional_information']['paygate-payment-type'] : '0';
 
         $fields = array(
             'PAYGATE_ID'       => $paygateId,
@@ -505,13 +504,19 @@ class PayGate extends AbstractMethod
             'TRANSACTION_DATE' => $DateTime->format('Y-m-d H:i:s'),
             'LOCALE'           => 'en-za',
             'COUNTRY'          => $country_code3,
-            'EMAIL'            => $order->getCustomerEmail(),
-            'NOTIFY_URL'       => $this->_urlBuilder->getUrl(
-                    'paygate/notify',
-                    array('_secure' => true)
-                ) . '?eid=' . $entityOrderId,
-            'USER3'            => 'magento2-v2.4.4'
+            'EMAIL'            => $order->getCustomerEmail()
         );
+
+        if ($paymentType !== '0' && $this->getConfigData('paygate_pay_method_active') != '0') {
+            $fields['PAY_METHOD']        = $this->getPaymentType($paymentType);
+            $fields['PAY_METHOD_DETAIL'] = $this->getPaymentTypeDetail($paymentType);
+        }
+
+        $fields['NOTIFY_URL'] = $this->_urlBuilder->getUrl(
+                'paygate/notify',
+                array('_secure' => true)
+            ) . '?eid=' . $entityOrderId;
+        $fields['USER3']      = 'magento2-v2.4.5';
 
         return $fields;
     }
@@ -536,6 +541,9 @@ class PayGate extends AbstractMethod
                 break;
             case self::MASTERPASS_METHOD:
                 return self::MASTERPASS_DESCRIPTION;
+                break;
+            case self::PAYPAL_METHOD:
+                return self::PAYPAL_DESCRIPTION;
                 break;
             default:
                 return self::CREDIT_CARD_DESCRIPTION;
@@ -562,6 +570,9 @@ class PayGate extends AbstractMethod
                 return 'EW';
                 break;
             case self::MASTERPASS_METHOD:
+                return 'EW';
+                break;
+            case self::PAYPAL_METHOD:
                 return 'EW';
                 break;
             default:

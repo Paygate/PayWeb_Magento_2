@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2021 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
@@ -48,6 +48,10 @@ class PaymentTypes implements ArrayInterface
                 'value' => 'EW-MASTERPASS',
                 'label' => "MasterPass",
             ],
+            [
+                'value' => 'EW-PAYPAL',
+                'label' => "PayPal",
+            ]
         );
     }
 }
