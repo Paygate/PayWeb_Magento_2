@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2021 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
@@ -246,6 +246,11 @@ class PaygateConfigProvider implements ConfigProviderInterface
                 'label' => "MasterPass",
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/masterpass.svg'),
             ),
+            'EW-PAYPAL'     => array(
+                'value' => 'EW-PAYPAL',
+                'label' => "PayPal",
+                'image' => $this->getViewFileUrl('PayGate_PayWeb::images/paypal.svg'),
+            )
         );
 
         $types = array();
