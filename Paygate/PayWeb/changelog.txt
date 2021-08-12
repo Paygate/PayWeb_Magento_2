@@ -2,6 +2,10 @@
 Date                Version     Description
 =========================================================================
 
+2021-08-12: v2.4.5 : Fix Swagger API issue.
+                     Add PayPal payment type.
+                     Fix DATA_CHK issue on Payment Types.
+
 2021-07-30: v2.4.4 : Consolidate Cron class into single file for Magento 2.4.x.
                      Block double order processing on multiple requests.
                      Add API support for PayGate payment gateway.
