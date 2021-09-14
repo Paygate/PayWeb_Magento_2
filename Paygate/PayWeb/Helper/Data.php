@@ -215,7 +215,11 @@ class Data extends AbstractHelper
             $paymentData = array();
             foreach ($resp as $param) {
                 $pr                  = explode("=", $param);
-                $paymentData[$pr[0]] = $pr[1];
+                if(isset($pr[1])){
+                    $paymentData[$pr[0]] = $pr[1];
+                } else {
+                    $this->_logger->error("Empty Response ".json_encode($param));
+                }
             }
             if (isset($paymentData['ERROR'])) {
                 $status = Order::STATE_CANCELED;

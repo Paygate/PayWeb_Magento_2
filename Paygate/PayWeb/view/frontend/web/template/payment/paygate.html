@@ -57,29 +57,24 @@
         <!-- /ko -->
 
         <!-- ko if:(paymentTypesEnabled() != 0) -->
-        <div class="payment-types" style="margin-bottom:20px;">
-            <label class="label" style="font-size:15px;font-weight:bold;margin-bottom:10px;">
+        <div class="payment-types" >
+            <label class="label" >
                 <span><!-- ko i18n: 'Select Payment Type: ' --><!-- /ko --></span>
             </label>
             <br/>
-            <ul class="types" style="margin-top:10px;">
+            <ul class="types" >
                 <!-- ko foreach: { data: JSON.parse(getPaymentTypesList()), as: 'option' } -->
-                <li class="option-type" onclick="jQuery(this).find('input[name=payment-type]').prop('checked', true);"
-                    style="margin-bottom:5px;">
-                    <ul>
-                        <li class="label-attr">
+                <li class="option-type" onclick="jQuery(this).find('input[name=payment-type]').prop('checked', true);">
                             <input class="paygate-payment-type" data-bind="attr: {'value': option.value}"
                                    name="payment-type"
                                    type="radio"/>
                             <label class="label">
-                                <span><!-- ko i18n: option.label --><!-- /ko --></span>
+                                <span class="payment-type-label" ><!-- ko i18n: option.label --><!-- /ko --></span>
+                                <span class="payment-type-label-img" >
+                                    <img class="payment-type-label-img" alt="" data-bind="attr: {'src': option.image}"  />
+                                </span>
                             </label>
                         </li>
-                        <li class="img-attr">
-                            <img alt="" data-bind="attr: {'src': option.image}" width="100"/>
-                        </li>
-                    </ul>
-                </li>
                 <!-- /ko -->
             </ul>
         </div>
