@@ -153,7 +153,7 @@ class Success extends AbstractPaygate
 
             $pay_request_id        = $data['PAY_REQUEST_ID'];
             $status                = isset($data['TRANSACTION_STATUS']) ? $data['TRANSACTION_STATUS'] : "";
-            $reference             = $order->getIncrementId();
+            $reference             = $order->getRealOrderId();
             $checksum              = isset($data['CHECKSUM']) ? $data['CHECKSUM'] : "";
             $data['PAYMENT_TITLE'] = "PAYGATE_PAYWEB";
 
@@ -270,9 +270,8 @@ class Success extends AbstractPaygate
 
     public function Notify($data)
     {
-        $response         = array();
-        $order            = $this->_order;
-        $orderIncrementId = $order->getIncrementId();
+        $response = array();
+        $order    = $this->_order;
 
         $paygateId     = $this->_paymentMethod->getPaygateId();
         $encryptionKey = $this->_paymentMethod->getEncryptionKey();
@@ -280,7 +279,7 @@ class Success extends AbstractPaygate
         $data = array(
             'PAYGATE_ID'     => $paygateId,
             'PAY_REQUEST_ID' => $data['PAY_REQUEST_ID'],
-            'REFERENCE'      => $orderIncrementId,
+            'REFERENCE'      => $order->getRealOrderId(),
         );
 
         $checksum = md5(implode('', $data) . $encryptionKey);

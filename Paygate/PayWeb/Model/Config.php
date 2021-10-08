@@ -319,6 +319,14 @@ class Config extends AbstractConfig
     }
 
     /**
+     * Get Paygate id from configuration
+     **/
+    public function getEnableLogging()
+    {
+        return trim($this->getConfig('enable_logging'));
+    }
+
+    /**
      * Check whether specified locale code is supported. Fallback to en_US
      *
      * @param string|null $localeCode

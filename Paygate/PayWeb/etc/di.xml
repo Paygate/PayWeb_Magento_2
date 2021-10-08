@@ -20,4 +20,18 @@
     <preference for="PayGate\PayWeb\Api\PayWebApiManagementInterface"
                 type="PayGate\PayWeb\Model\Api\PayWebApiManagement"/>
     <preference for="PayGate\PayWeb\Api\Data\PayWebApiInterface" type="PayGate\PayWeb\Model\PayWebApi"/>
+
+    <type name="PayGate\PayWeb\Logger\Handler">
+        <arguments>
+            <argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>
+        </arguments>
+    </type>
+    <type name="PayGate\PayWeb\Logger\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">paywebLogger</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="system" xsi:type="object">PayGate\PayWeb\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </type>
 </config>

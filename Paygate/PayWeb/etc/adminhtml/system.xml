@@ -43,6 +43,15 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Disable IPN notify method and use redirect method instead.</comment>
                 </field>
+                <field id="enable_logging" translate="label" type="select" sortOrder="6" showInDefault="1"
+                       showInWebsite="1"
+                       showInStore="0">
+                    <label>Log Fetch Method</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Enable logging for the Fetch method. Only enable this while debugging, best left off for
+                        general production usage.
+                    </comment>
+                </field>
                 <field id="allowed_carrier" translate="label" type="multiselect" sortOrder="7" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Allowed Shipping Methods</label>

@@ -2,6 +2,9 @@
 Date                Version     Description
 =========================================================================
 
+2021-10-08: v2.4.7 : Add debug logging option for fetch method.
+                     Only use real order ID in PayWeb reference field.
+
 2021-09-15: v2.4.6 : Disable PayGate on unsupported multiship.
                      Fix undefined offset on cron query method.
                      Improve Payment Type styling on one step checkout.
