@@ -24,6 +24,7 @@ use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder;
 use Magento\Sales\Model\Service\InvoiceService;
 use Magento\Store\Model\Store;
+use PayGate\PayWeb\Logger\Logger;
 use PayGate\PayWeb\Model\Config as PayGateConfig;
 use PayGate\PayWeb\Model\ConfigFactory;
 use Psr\Log\LoggerInterface;
@@ -73,6 +74,11 @@ class Data extends AbstractHelper
      */
     protected $dbTransaction;
     /**
+     * Logging instance
+     * @var \PayGate\PayWeb\Logger\Logger
+     */
+    protected $_paygatelogger;
+    /**
      * @var array
      */
     private $methodCodes;
@@ -102,9 +108,11 @@ class Data extends AbstractHelper
         DBTransaction $dbTransaction,
         InvoiceService $invoiceService,
         InvoiceSender $invoiceSender,
+        Logger $logger,
         array $methodCodes
     ) {
-        $this->_logger = $context->getLogger();
+        $this->_logger        = $context->getLogger();
+        $this->_paygatelogger = $logger;
 
         $pre = __METHOD__ . " : ";
         $this->_logger->debug($pre . 'bof, methodCodes is : ', $methodCodes);
@@ -184,6 +192,9 @@ class Data extends AbstractHelper
             'REFERENCE'      => "$reference",
         );
 
+        $enableLogging = $this->_paygateconfig->getEnableLogging();
+
+
         $checksum = md5(implode('', $data) . $encryptionKey);
 
         $data['CHECKSUM'] = $checksum;
@@ -203,6 +214,12 @@ class Data extends AbstractHelper
         // Execute post
         $result = curl_exec($ch);
 
+        if ($enableLogging) {
+            $this->_paygatelogger->info("Encryption Key => " . $encryptionKey);
+            $this->_paygatelogger->info(json_encode($data));
+            $this->_paygatelogger->info(json_encode($result));
+        }
+
         // Close connection
         curl_close($ch);
 
@@ -214,11 +231,11 @@ class Data extends AbstractHelper
         if (is_array($resp) && count($resp) > 0) {
             $paymentData = array();
             foreach ($resp as $param) {
-                $pr                  = explode("=", $param);
-                if(isset($pr[1])){
+                $pr = explode("=", $param);
+                if (isset($pr[1])) {
                     $paymentData[$pr[0]] = $pr[1];
                 } else {
-                    $this->_logger->error("Empty Response ".json_encode($param));
+                    $this->_logger->error("Empty Response " . json_encode($param));
                 }
             }
             if (isset($paymentData['ERROR'])) {

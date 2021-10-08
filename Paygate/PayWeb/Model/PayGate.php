@@ -516,7 +516,7 @@ class PayGate extends AbstractMethod
                 'paygate/notify',
                 array('_secure' => true)
             ) . '?eid=' . $entityOrderId;
-        $fields['USER3']      = 'magento2-v2.4.6';
+        $fields['USER3']      = 'magento2-v2.4.7';
 
         return $fields;
     }
@@ -745,7 +745,7 @@ class PayGate extends AbstractMethod
             $order    = $this->getOrderbyOrderId($order_id);
 
             $orderquery['transaction_id'] = $transactionId;
-            $orderquery['reference']      = $order->getIncrementId();
+            $orderquery['reference']      = $order->getRealOrderId();
             $result                       = $this->_PaygateHelper->getQueryResult($orderquery);
             $result                       = explode("&", $result);
 
