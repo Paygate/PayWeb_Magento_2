@@ -516,7 +516,7 @@ class PayGate extends AbstractMethod
                 'paygate/notify',
                 array('_secure' => true)
             ) . '?eid=' . $entityOrderId;
-        $fields['USER3']      = 'magento2-v2.4.7';
+        $fields['USER3']      = 'magento2-v2.4.8';
 
         return $fields;
     }
