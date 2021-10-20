@@ -248,12 +248,22 @@ class Data extends AbstractHelper
             }
 
             if ($paymentData['TRANSACTION_STATUS'] == 1) {
-                $status = Order::STATE_PROCESSING;
-                $order->setStatus($status);
-                $order->setState($status);
-                $order->save();
                 try {
-                    $this->generateInvoice($order);
+                    $status_canceled = Order::STATE_CANCELED;;
+                    if ($order->getStatus() == $status_canceled) {
+                        $this->restoreOrder($order);
+                    }
+
+                    $status = Order::STATE_COMPLETE;
+
+                    if ($order->getInvoiceCollection()->count() <= 0) {
+                        $status = Order::STATE_PROCESSING;
+                        $this->generateInvoice($order);
+                    }
+
+                    $order->setStatus($status);
+                    $order->setState($status);
+                    $order->save();
                 } catch (Exception $ex) {
                     $this->_logger->error($ex->getMessage());
                 }
@@ -263,6 +273,14 @@ class Data extends AbstractHelper
                 $order->setState($status);
                 $order->save();
             }
+        }
+    }
+
+    public function restoreOrder($order)
+    {
+        $orderItems = $order->getAllItems();
+        foreach ($orderItems as $item) {
+            $item->setData("qty_canceled", 0)->save();
         }
     }
 

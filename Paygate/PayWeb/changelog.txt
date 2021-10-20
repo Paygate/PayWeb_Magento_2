@@ -2,6 +2,8 @@
 Date                Version     Description
 =========================================================================
 
+2021-10-20: v2.4.8 : Improve fetch method to uncancel approved fetched orders.
+
 2021-10-08: v2.4.7 : Add debug logging option for fetch method.
                      Only use real order ID in PayWeb reference field.
 
