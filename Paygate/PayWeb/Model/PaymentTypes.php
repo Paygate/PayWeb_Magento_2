@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2021 PayGate (Pty) Ltd
+ * Copyright (c) 2022 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -45,8 +45,8 @@ class PaymentTypes implements ArrayInterface
                 'label' => "MoMoPay",
             ],
             [
-                'value' => 'EW-MASTERPASS',
-                'label' => "MasterPass",
+                'value' => 'EW-SCANTOPAY',
+                'label' => "ScanToPay",
             ],
             [
                 'value' => 'EW-PAYPAL',

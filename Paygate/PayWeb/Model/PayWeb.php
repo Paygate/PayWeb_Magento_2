@@ -1,4 +1,11 @@
 <?php
+/**
+ * Copyright (c) 2022 PayGate (Pty) Ltd
+ *
+ * Author: App Inlet (Pty) Ltd
+ *
+ * Released under the GNU General Public License
+ */
 
 namespace PayGate\PayWeb\Model;
 
@@ -23,14 +30,6 @@ use Magento\Vault\Model\CreditCardTokenFactory;
 use PayGate\PayWeb\Api\Data\PayWebApiInterface;
 use PayGate\PayWeb\Helper\Data;
 use PayGate\PayWeb\Model\PayGate as PayGateModel;
-
-/*
- * Copyright (c) 2021 PayGate (Pty) Ltd
- *
- * Author: App Inlet (Pty) Ltd
- *
- * Released under the GNU General Public License
- */
 
 class PayWeb implements PayWebApiInterface
 {

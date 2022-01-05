@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2021 PayGate (Pty) Ltd
+ * Copyright (c) 2022 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -61,14 +61,14 @@ class PayGate extends AbstractMethod
     const SNAPSCAN                    = 'pw3_e_snapscan';
     const MOBICRED                    = 'pw3_e_mobicred';
     const MOMOPAY                     = 'pw3_e_momopay';
-    const MASTERPASS                  = 'pw3_e_masterpass';
+    const SCANTOPAY                   = 'pw3_e_scantopay';
     const CREDIT_CARD_METHOD          = 'CC';
     const BANK_TRANSFER_METHOD        = 'BT';
     const ZAPPER_METHOD               = 'EW-ZAPPER';
     const SNAPSCAN_METHOD             = 'EW-SNAPSCAN';
     const MOBICRED_METHOD             = 'EW-MOBICRED';
     const MOMOPAY_METHOD              = 'EW-MOMOPAY';
-    const MASTERPASS_METHOD           = 'EW-MASTERPASS';
+    const SCANTOPAY_METHOD            = 'EW-SCANTOPAY';
     const PAYPAL_METHOD               = 'EW-PAYPAL';
     const CREDIT_CARD_DESCRIPTION     = 'Card';
     const BANK_TRANSFER_DESCRIPTION   = 'SiD Secure EFT';
@@ -78,7 +78,7 @@ class PayGate extends AbstractMethod
     const MOBICRED_DESCRIPTION        = 'Mobicred';
     const MOMOPAY_DESCRIPTION         = 'MoMoPay';
     const MOMOPAY_METHOD_DETAIL       = 'Momopay';
-    const MASTERPASS_DESCRIPTION      = 'MasterPass';
+    const SCANTOPAY_DESCRIPTION       = 'ScanToPay';
     const PAYPAL_DESCRIPTION          = 'PayPal';
     const SECURE                      = '_secure';
     /**
@@ -233,7 +233,7 @@ class PayGate extends AbstractMethod
         self::SNAPSCAN_METHOD      => self::SNAPSCAN_DESCRIPTION,
         self::MOBICRED_METHOD      => self::MOBICRED_DESCRIPTION,
         self::MOMOPAY_METHOD       => self::MOMOPAY_METHOD_DETAIL,
-        self::MASTERPASS_METHOD    => self::MASTERPASS_DESCRIPTION,
+        self::SCANTOPAY_METHOD     => self::SCANTOPAY_DESCRIPTION,
         self::PAYPAL_METHOD        => self::PAYPAL_DESCRIPTION,
     ];
 
@@ -516,7 +516,7 @@ class PayGate extends AbstractMethod
                 'paygate/notify',
                 array('_secure' => true)
             ) . '?eid=' . $entityOrderId;
-        $fields['USER3']      = 'magento2-v2.4.8';
+        $fields['USER3']      = 'magento2-v2.4.9';
 
         return $fields;
     }
@@ -539,8 +539,8 @@ class PayGate extends AbstractMethod
             case self::MOMOPAY_METHOD:
                 return self::MOMOPAY_METHOD_DETAIL;
                 break;
-            case self::MASTERPASS_METHOD:
-                return self::MASTERPASS_DESCRIPTION;
+            case self::SCANTOPAY_METHOD:
+                return self::SCANTOPAY_DESCRIPTION;
                 break;
             case self::PAYPAL_METHOD:
                 return self::PAYPAL_DESCRIPTION;
@@ -569,7 +569,7 @@ class PayGate extends AbstractMethod
             case self::MOMOPAY_METHOD:
                 return 'EW';
                 break;
-            case self::MASTERPASS_METHOD:
+            case self::SCANTOPAY_METHOD:
                 return 'EW';
                 break;
             case self::PAYPAL_METHOD:
@@ -746,6 +746,7 @@ class PayGate extends AbstractMethod
 
             $orderquery['transaction_id'] = $transactionId;
             $orderquery['reference']      = $order->getRealOrderId();
+            $orderquery['store_id']       = $order->getStoreId();
             $result                       = $this->_PaygateHelper->getQueryResult($orderquery);
             $result                       = explode("&", $result);
 
