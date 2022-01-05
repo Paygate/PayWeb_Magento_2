@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2021 PayGate (Pty) Ltd
+ * Copyright (c) 2022 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -249,11 +249,18 @@ class Config extends AbstractConfig
         return $supported;
     }
 
-    public function getConfig($field)
+    public function getConfig($field, $store_id = null)
     {
+        $path       = "payment/paygate/$field";
         $storeScope = ScopeInterface::SCOPE_STORE;
 
-        return $this->scopeConfig->getValue("payment/paygate/$field", $storeScope);
+        $value = $this->scopeConfig->getValue($path, $storeScope);
+
+        if ($store_id) {
+            $value = $this->scopeConfig->getValue($path, $storeScope, $store_id);
+        }
+
+        return $value;
     }
 
     /**
@@ -295,9 +302,13 @@ class Config extends AbstractConfig
     /**
      * Get Encryption key from configuration
      **/
-    public function getEncryptionKey()
+    public function getEncryptionKey($store_id = null)
     {
         $encryptionKey = $this->getConfig('encryption_key');
+        if ($store_id) {
+            $encryptionKey = $this->getConfig('encryption_key', $store_id);
+        }
+
         if ($this->isTestMode()) {
             $encryptionKey = 'secret';
         }
@@ -308,9 +319,13 @@ class Config extends AbstractConfig
     /**
      * Get Paygate id from configuration
      **/
-    public function getPaygateId()
+    public function getPaygateId($store_id = null)
     {
         $paygateId = trim($this->getConfig('paygate_id'));
+        if ($store_id) {
+            $paygateId = trim($this->getConfig('paygate_id', $store_id));
+        }
+
         if ($this->isTestMode()) {
             $paygateId = '10011072130';
         }

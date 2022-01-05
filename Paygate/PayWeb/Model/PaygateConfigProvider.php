@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2021 PayGate (Pty) Ltd
+ * Copyright (c) 2022 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -211,42 +211,42 @@ class PaygateConfigProvider implements ConfigProviderInterface
         );
 
         $allTypes = array(
-            'CC'            => array(
+            'CC'           => array(
                 'value' => 'CC',
                 'label' => "Card",
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/mastercard-visa.svg'),
             ),
-            'BT'            => array(
+            'BT'           => array(
                 'value' => 'BT',
                 'label' => "SiD Secure EFT",
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/sid.svg'),
             ),
-            'EW-ZAPPER'     => array(
+            'EW-ZAPPER'    => array(
                 'value' => 'EW-ZAPPER',
                 'label' => "Zapper",
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/zapper.svg'),
             ),
-            'EW-SNAPSCAN'   => array(
+            'EW-SNAPSCAN'  => array(
                 'value' => 'EW-SNAPSCAN',
                 'label' => "SnapScan",
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/snapscan.svg'),
             ),
-            'EW-MOBICRED'   => array(
+            'EW-MOBICRED'  => array(
                 'value' => 'EW-MOBICRED',
                 'label' => "Mobicred",
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/mobicred.svg'),
             ),
-            'EW-MOMOPAY'    => array(
+            'EW-MOMOPAY'   => array(
                 'value' => 'EW-MOMOPAY',
                 'label' => "MoMoPay",
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/momopay.svg'),
             ),
-            'EW-MASTERPASS' => array(
-                'value' => 'EW-MASTERPASS',
-                'label' => "MasterPass",
-                'image' => $this->getViewFileUrl('PayGate_PayWeb::images/masterpass.svg'),
+            'EW-SCANTOPAY' => array(
+                'value' => 'EW-SCANTOPAY',
+                'label' => "ScanToPay",
+                'image' => $this->getViewFileUrl('PayGate_PayWeb::images/scan-to-pay.svg'),
             ),
-            'EW-PAYPAL'     => array(
+            'EW-PAYPAL'    => array(
                 'value' => 'EW-PAYPAL',
                 'label' => "PayPal",
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/paypal.svg'),

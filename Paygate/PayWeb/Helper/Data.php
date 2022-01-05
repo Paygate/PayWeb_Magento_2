@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2021 PayGate (Pty) Ltd
+ * Copyright (c) 2022 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -75,7 +75,7 @@ class Data extends AbstractHelper
     protected $dbTransaction;
     /**
      * Logging instance
-     * @var \PayGate\PayWeb\Logger\Logger
+     * @var Logger
      */
     protected $_paygatelogger;
     /**
@@ -179,8 +179,14 @@ class Data extends AbstractHelper
 
     public function getQueryResult($orderquery)
     {
-        $encryption_key = $this->_paygateconfig->getEncryptionKey();
-        $paygate_id     = $this->_paygateconfig->getPaygateId();
+        if (isset($orderquery['store_id'])) {
+            $store_id = $orderquery['store_id'];
+        } else {
+            $store_id = "";
+        }
+
+        $encryption_key = $this->_paygateconfig->getEncryptionKey($store_id);
+        $paygate_id     = $this->_paygateconfig->getPaygateId($store_id);
 
         // Encryption key set in the Merchant Access Portal
         $encryptionKey  = "$encryption_key";
@@ -249,7 +255,7 @@ class Data extends AbstractHelper
 
             if ($paymentData['TRANSACTION_STATUS'] == 1) {
                 try {
-                    $status_canceled = Order::STATE_CANCELED;;
+                    $status_canceled = Order::STATE_CANCELED;
                     if ($order->getStatus() == $status_canceled) {
                         $this->restoreOrder($order);
                     }

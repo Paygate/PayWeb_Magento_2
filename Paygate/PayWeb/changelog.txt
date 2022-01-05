@@ -2,6 +2,9 @@
 Date                Version     Description
 =========================================================================
 
+2022-01-05: v2.4.9 : Improve store scope handling.
+                     Update Masterpass to Scan to Pay. 
+
 2021-10-20: v2.4.8 : Improve fetch method to uncancel approved fetched orders.
 
 2021-10-08: v2.4.7 : Add debug logging option for fetch method.
