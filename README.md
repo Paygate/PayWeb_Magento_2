@@ -12,7 +12,7 @@ You can install this module using composer:
 composer require paygate/paygate-payweb-gateway
 ```
 
-Alternatively, please navigate to the [releases page](https://github.com/PayGate/PayWeb_Magento_2/releases), download the latest release (v2.4.9) and unzip. You will then be able to follow the integration guide PDF which is included in the zip.
+Alternatively, please navigate to the [releases page](https://github.com/PayGate/PayWeb_Magento_2/releases), download the latest release (v2.5.0) and unzip. You will then be able to follow the integration guide PDF which is included in the zip.
 
 ## Collaboration
 
