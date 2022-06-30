@@ -109,6 +109,11 @@
                     <label>Successful Order Status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
                 </field>
+                <field id="Successful_Order_state" translate="label" type="select" sortOrder="17" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Successful Order State</label>
+                    <source_model>Magento\Sales\Model\Config\Source\Order\Status</source_model>
+                </field>
             </group>
         </section>
     </system>

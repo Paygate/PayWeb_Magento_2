@@ -8,7 +8,7 @@
  * Released under the GNU General Public License
  */
 -->
-<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column"
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <head>
         <css src="PayGate_PayWeb::css/paygate_checkout.css"/>

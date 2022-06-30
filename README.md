@@ -1,12 +1,12 @@
 # PayWeb_Magento_2
-## PayGate Magento plugin v2.4.9 for Magento v2.4.3
+## PayGate Magento plugin v2.5.0 for Magento v2.4.4
 
 This is the PayGate PayWeb3 plugin for Magento 2. Please feel free to contact the PayGate support team at support@paygate.co.za should you require any assistance.
 
 ## Installation
 [![How To Setup PayGate PayWeb for Magento 2](https://appinlet.com/wp-content/uploads/2021/01/How-To-Setup-PayGate-PayWeb-for-Magento-2.jpg)](https://www.youtube.com/watch?v=JtDTm49cWmU "How To Setup PayGate PayWeb for Magento 2")
 
-Please navigate to the [releases page](https://github.com/PayGate/PayWeb_Magento_2/releases), download the latest release (v2.4.9) and unzip. You will then be able to follow the integration guide PDF which is included in the zip.
+Please navigate to the [releases page](https://github.com/PayGate/PayWeb_Magento_2/releases), download the latest release (v2.5.0) and unzip. You will then be able to follow the integration guide PDF which is included in the zip.
 
 ## Collaboration
 
