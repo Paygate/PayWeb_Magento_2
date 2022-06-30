@@ -179,8 +179,14 @@ class Indexm220 extends AbstractPaygate
                         $orderState = $order->getState();
                         if ($orderState != Order::STATE_COMPLETE && $orderState != Order::STATE_PROCESSING) {
                             $status = Order::STATE_PROCESSING;
+                            $state  = Order::STATE_PROCESSING;
+
                             if ($this->getConfigData('Successful_Order_status') != "") {
                                 $status = $this->getConfigData('Successful_Order_status');
+                            }
+
+                            if ($this->getConfigData('Successful_Order_state') != '') {
+                                $state = $this->getConfigData('Successful_Order_state');
                             }
 
                             $model                  = $this->_paymentMethod;
@@ -216,7 +222,7 @@ class Indexm220 extends AbstractPaygate
 
                             // Save Transaction Response
                             $this->createTransaction($order, $paygate_data);
-                            $order->setState($status)->setStatus($status)->save();
+                            $order->setState($state)->setStatus($status)->save();
                         }
 
                         exit;

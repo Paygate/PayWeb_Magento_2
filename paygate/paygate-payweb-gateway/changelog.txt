@@ -2,6 +2,11 @@
 Date                Version     Description
 =========================================================================
 
+2022-06-30: v2.5.0 : Remove layout="1column" from frontend.
+                     BREAKING CHANGE: Add the ability to set Successful Order State
+                     in addition to Successful Order Status. Please ensure this config
+                     option is set after updating.
+
 2022-01-05: v2.4.9 : Improve store scope handling.
                      Update Masterpass to Scan to Pay. 
 

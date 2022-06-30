@@ -175,8 +175,13 @@ class Success extends AbstractPaygate
                         if ($canProcessThisOrder) {
                             $order->setPaywebPaymentProcessed(1)->save();
                             $status = Order::STATE_PROCESSING;
+                            $state  = Order::STATE_PROCESSING;
                             if ($this->getConfigData('Successful_Order_status') != "") {
                                 $status = $this->getConfigData('Successful_Order_status');
+                            }
+
+                            if ($this->getConfigData('Successful_Order_state') != "") {
+                                $state = $this->getConfigData('Successful_Order_state');
                             }
 
                             $model                  = $this->_paymentMethod;
@@ -212,7 +217,7 @@ class Success extends AbstractPaygate
 
                             // Save Transaction Response
                             $this->createTransaction($order, $data);
-                            $order->setState($status)->setStatus($status)->save();
+                            $order->setState($state)->setStatus($status)->save();
                         }
 
                         // Invoice capture code completed
