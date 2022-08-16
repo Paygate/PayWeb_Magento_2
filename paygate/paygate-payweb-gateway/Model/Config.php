@@ -1,4 +1,12 @@
 <?php
+/** @noinspection PhpMissingFieldTypeInspection */
+
+/** @noinspection PhpPropertyOnlyWrittenInspection */
+
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
+
 /*
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -11,6 +19,7 @@
 
 namespace PayGate\PayWeb\Model;
 
+use JetBrains\PhpStorm\Pure;
 use Magento\Directory\Helper\Data;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\UrlInterface;
@@ -38,40 +47,41 @@ class Config extends AbstractConfig
      * Core
      * data @var Data
      */
-    protected $directoryHelper;
+    protected Data $directoryHelper;
 
     /**
      * @var StoreManagerInterface
      */
-    protected $_storeManager;
+    protected StoreManagerInterface $_storeManager;
 
-    protected $_supportedBuyerCountryCodes = ['ZA'];
+    protected array $_supportedBuyerCountryCodes = ['ZA'];
 
     /**
      * Currency codes supported by PayGate methods
      * @var string[]
      */
-    protected $_supportedCurrencyCodes = ['USD', 'EUR', 'GPD', 'ZAR'];
+    protected array $_supportedCurrencyCodes = ['USD', 'EUR', 'GPD', 'ZAR'];
 
     /**
      * @var LoggerInterface
      */
-    protected $_logger;
+    protected LoggerInterface $_logger;
 
     /**
      * @var UrlInterface
      */
-    protected $_urlBuilder;
+    protected UrlInterface $_urlBuilder;
 
     /**
      * @var Repository
      */
-    protected $_assetRepo;
+    protected Repository $_assetRepo;
 
     /**
      * @var ScopeConfigInterface
      */
-    protected $scopeConfig;
+    protected ScopeConfigInterface $scopeConfig;
+    private $_supportedImageLocales;
 
     public function __construct(
         ScopeConfigInterface $scopeConfig,
@@ -101,7 +111,7 @@ class Config extends AbstractConfig
      * @return bool
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    public function isMethodAvailable($methodCode = null)
+    public function isMethodAvailable($methodCode = null): bool
     {
         return parent::isMethodAvailable($methodCode);
     }
@@ -111,17 +121,17 @@ class Config extends AbstractConfig
      *
      * @return string[]
      */
-    public function getSupportedBuyerCountryCodes()
+    public function getSupportedBuyerCountryCodes(): array
     {
         return $this->_supportedBuyerCountryCodes;
     }
 
     /**
-     * Return merchant country code, use default country if it not specified in General settings
+     * Return merchant country code, use default country if it is not specified in General settings
      *
      * @return string
      */
-    public function getMerchantCountry()
+    public function getMerchantCountry(): string
     {
         return $this->directoryHelper->getDefaultCountry($this->_storeId);
     }
@@ -135,7 +145,7 @@ class Config extends AbstractConfig
      *
      * @return bool
      */
-    public function isMethodSupportedForCountry($method = null, $countryCode = null)
+    public function isMethodSupportedForCountry(string $method = null, string $countryCode = null): bool
     {
         if ($method === null) {
             $method = $this->getMethodCode();
@@ -156,7 +166,7 @@ class Config extends AbstractConfig
      * @return array
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function getCountryMethods($countryCode = null)
+    public function getCountryMethods(string $countryCode = null): array
     {
         $countryMethods = [
             'other' => [
@@ -168,7 +178,7 @@ class Config extends AbstractConfig
             return $countryMethods;
         }
 
-        return isset($countryMethods[$countryCode]) ? $countryMethods[$countryCode] : $countryMethods['other'];
+        return $countryMethods[$countryCode] ?? $countryMethods['other'];
     }
 
     /**
@@ -176,7 +186,7 @@ class Config extends AbstractConfig
      *
      * @return string
      */
-    public function getPaymentMarkImageUrl()
+    public function getPaymentMarkImageUrl(): string
     {
         return $this->_assetRepo->getUrl('PayGate_PayWeb::images/logo.png');
     }
@@ -187,7 +197,7 @@ class Config extends AbstractConfig
      *
      * @return string
      */
-    public function getPaymentMarkWhatIsPaygate()
+    public function getPaymentMarkWhatIsPaygate(): string
     {
         return 'PayGate Payment gateway';
     }
@@ -197,7 +207,7 @@ class Config extends AbstractConfig
      *
      * @return string|null
      */
-    public function getPaymentAction()
+    public function getPaymentAction(): ?string
     {
         $paymentAction = null;
         $pre           = __METHOD__ . ' : ';
@@ -233,18 +243,18 @@ class Config extends AbstractConfig
      *
      * @return bool
      */
-    public function isCurrencyCodeSupported($code)
+    public function isCurrencyCodeSupported(string $code): bool
     {
         $supported = false;
         $pre       = __METHOD__ . ' : ';
 
-        $this->_logger->debug($pre . "bof and code: {$code}");
+        $this->_logger->debug($pre . "bof and code: $code");
 
         if (in_array($code, $this->_supportedCurrencyCodes)) {
             $supported = true;
         }
 
-        $this->_logger->debug($pre . "eof and supported : {$supported}");
+        $this->_logger->debug($pre . "eof and supported : $supported");
 
         return $supported;
     }
@@ -282,7 +292,7 @@ class Config extends AbstractConfig
     /**
      * Check Payment Types Enabled in admin or not
      **/
-    public function isEnabledPaymenTypes()
+    public function isEnabledPaymentTypes()
     {
         return $this->getConfig('paygate_pay_method_active');
     }
@@ -290,7 +300,7 @@ class Config extends AbstractConfig
     /**
      * Check is test mode or live
      **/
-    public function isTestMode()
+    public function isTestMode(): bool
     {
         if ($this->getConfig('test_mode') == '1') {
             return true;
@@ -302,7 +312,7 @@ class Config extends AbstractConfig
     /**
      * Get Encryption key from configuration
      **/
-    public function getEncryptionKey($store_id = null)
+    public function getEncryptionKey($store_id = null): string
     {
         $encryptionKey = $this->getConfig('encryption_key');
         if ($store_id) {
@@ -319,7 +329,7 @@ class Config extends AbstractConfig
     /**
      * Get Paygate id from configuration
      **/
-    public function getPaygateId($store_id = null)
+    public function getPaygateId($store_id = null): string
     {
         $paygateId = trim($this->getConfig('paygate_id'));
         if ($store_id) {
@@ -336,7 +346,7 @@ class Config extends AbstractConfig
     /**
      * Get Paygate id from configuration
      **/
-    public function getEnableLogging()
+    public function getEnableLogging(): string
     {
         return trim($this->getConfig('enable_logging'));
     }
@@ -348,7 +358,7 @@ class Config extends AbstractConfig
      *
      * @return string
      */
-    protected function _getSupportedLocaleCode($localeCode = null)
+    protected function _getSupportedLocaleCode(string $localeCode = null): string
     {
         if ( ! $localeCode || ! in_array($localeCode, $this->_supportedImageLocales)) {
             return 'en_US';
@@ -366,9 +376,9 @@ class Config extends AbstractConfig
      * @return string|null
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    protected function _mapPayGateFieldset($fieldName)
+    protected function _mapPayGateFieldset(string $fieldName): ?string
     {
-        return "payment/{$this->_methodCode}/{$fieldName}";
+        return "payment/$this->_methodCode/$fieldName";
     }
 
     /**
@@ -380,7 +390,7 @@ class Config extends AbstractConfig
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
-    protected function _getSpecificConfigPath($fieldName)
+    #[Pure] protected function _getSpecificConfigPath(string $fieldName): ?string
     {
         return $this->_mapPayGateFieldset($fieldName);
     }

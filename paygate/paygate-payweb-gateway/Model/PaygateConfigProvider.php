@@ -1,4 +1,8 @@
 <?php
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
+
 /**
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -9,6 +13,7 @@
 
 namespace PayGate\PayWeb\Model;
 
+use JetBrains\PhpStorm\ArrayShape;
 use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Customer\Helper\Session\CurrentCustomer;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -30,74 +35,74 @@ class PaygateConfigProvider implements ConfigProviderInterface
     /**
      * @var ResolverInterface
      */
-    protected $localeResolver;
+    protected ResolverInterface $localeResolver;
 
     /**
      * @var Config
      */
-    protected $config;
+    protected Config $config;
 
     /**
-     * @var ScopeConfig
+     * @var ScopeConfig|ScopeConfigInterface
      */
-    protected $scopeConfig;
+    protected ScopeConfig|ScopeConfigInterface $scopeConfig;
 
     /**
-     * @var path
+     * @var string|path
      */
-    protected $path = 'payment/paygate/';
+    protected string|path $path = 'payment/paygate/';
 
     /**
      * @var StoreManagerInterface
      */
-    protected $storeManager;
+    protected StoreManagerInterface $storeManager;
 
     /**
      * @var CurrentCustomer
      */
-    protected $currentCustomer;
+    protected CurrentCustomer $currentCustomer;
 
     /**
      * @var LoggerInterface
      */
-    protected $_logger;
+    protected LoggerInterface $_logger;
 
     /**
      * @var PaygateHelper
      */
-    protected $paygateHelper;
+    protected PaygateHelper $paygateHelper;
 
     /**
      * @var string[]
      */
-    protected $methodCodes = [
+    protected array $methodCodes = [
         Config::METHOD_CODE,
     ];
 
     /**
      * @var AbstractMethod[]
      */
-    protected $methods = [];
+    protected array $methods = [];
 
     /**
      * @var PaymentHelper
      */
-    protected $paymentHelper;
+    protected PaymentHelper $paymentHelper;
 
     /**
      * @var Repository
      */
-    protected $assetRepo;
+    protected Repository $assetRepo;
 
     /**
      * @var UrlInterface
      */
-    protected $urlBuilder;
+    protected UrlInterface $urlBuilder;
 
     /**
      * @var RequestInterface
      */
-    protected $request;
+    protected RequestInterface $request;
 
     public function __construct(
         LoggerInterface $logger,
@@ -137,7 +142,7 @@ class PaygateConfigProvider implements ConfigProviderInterface
     /**
      * {@inheritdoc}
      */
-    public function getConfig()
+    #[ArrayShape(['payment' => "array[]"])] public function getConfig(): array
     {
         $pre                    = __METHOD__ . ' : ';
         $om                     = ObjectManager::getInstance();
@@ -175,7 +180,7 @@ class PaygateConfigProvider implements ConfigProviderInterface
                     'paymentTypeList'           => $this->getPaymentTypes(),
                     'saved_card_data'           => json_encode($cards),
                     'card_count'                => $cardCount,
-                    'enablePaymentTypes'        => $this->config->isEnabledPaymenTypes(),
+                    'enablePaymentTypes'        => $this->config->isEnabledPaymentTypes(),
                 ],
             ],
         ];
@@ -191,7 +196,7 @@ class PaygateConfigProvider implements ConfigProviderInterface
         return $dbConfig;
     }
 
-    public function getPaymentTypes()
+    public function getPaymentTypes(): bool|string
     {
         $storeId = $this->storeManager->getStore()->getId();
 
@@ -207,7 +212,7 @@ class PaygateConfigProvider implements ConfigProviderInterface
                 $this->path . 'enable_payment_types',
                 ScopeInterface::SCOPE_STORE,
                 $storeId
-            )
+            ) ?? ''
         );
 
         $allTypes = array(
@@ -271,7 +276,7 @@ class PaygateConfigProvider implements ConfigProviderInterface
      *
      * @return string
      */
-    public function getViewFileUrl($fileId, array $params = [])
+    public function getViewFileUrl(string $fileId, array $params = []): string
     {
         try {
             $params = array_merge(['_secure' => $this->request->isSecure()], $params);
@@ -291,7 +296,7 @@ class PaygateConfigProvider implements ConfigProviderInterface
      *
      * @return mixed
      */
-    protected function getMethodRedirectUrl($code)
+    protected function getMethodRedirectUrl(string $code): mixed
     {
         $pre = __METHOD__ . ' : ';
         $this->_logger->debug($pre . 'bof');
@@ -308,19 +313,18 @@ class PaygateConfigProvider implements ConfigProviderInterface
      *
      * @param string $code
      *
-     * @return null|string
+     * @return bool
      */
-    protected function getBillingAgreementCode($code)
+    protected function getBillingAgreementCode(string $code): bool
     {
         $pre = __METHOD__ . ' : ';
         $this->_logger->debug($pre . 'bof');
 
-        $customerId = $this->currentCustomer->getCustomerId();
         $this->config->setMethod($code);
 
         $this->_logger->debug($pre . 'eof');
 
         // Always return null
-        return $this->paygateHelper->shouldAskToCreateBillingAgreement($this->config, $customerId);
+        return $this->paygateHelper->shouldAskToCreateBillingAgreement();
     }
 }

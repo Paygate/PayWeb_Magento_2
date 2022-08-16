@@ -1,4 +1,8 @@
 <?php
+/** @noinspection PhpPropertyOnlyWrittenInspection */
+
+/** @noinspection PhpUndefinedNamespaceInspection */
+
 /*
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -22,7 +26,8 @@ class Info extends \Magento\Payment\Block\Info
     /**
      * @var InfoFactory
      */
-    protected $_PaygateInfoFactory;
+    protected InfoFactory $_PaygateInfoFactory;
+    private Config $_paymentConfig;
 
     /**
      * @param Context $context

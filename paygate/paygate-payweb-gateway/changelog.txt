@@ -2,13 +2,16 @@
 Date                Version     Description
 =========================================================================
 
+2022-08-15: v2.5.1 : Magento 2.4.5 and PHP 8.1 compatible.
+                     Code quality improvements and bug fixes.
+
 2022-06-30: v2.5.0 : Remove layout="1column" from frontend.
                      BREAKING CHANGE: Add the ability to set Successful Order State
                      in addition to Successful Order Status. Please ensure this config
                      option is set after updating.
 
 2022-01-05: v2.4.9 : Improve store scope handling.
-                     Update Masterpass to Scan to Pay. 
+                     Update Masterpass to Scan to Pay.
 
 2021-10-20: v2.4.8 : Improve fetch method to uncancel approved fetched orders.
 
@@ -17,7 +20,7 @@ Date                Version     Description
 
 2021-09-15: v2.4.6 : Disable PayGate on unsupported multiship.
                      Fix undefined offset on cron query method.
-                     Improve Payment Type styling on one step checkout.
+                     Improve Payment Type styling on one-step checkout.
                      Add additional logging on fetch method.
 
 2021-08-12: v2.4.5 : Fix Swagger API issue.
@@ -44,7 +47,7 @@ Date                Version     Description
                      Payment Types radio block fix for some themes.
                      Remove object manager.
                      Fix undefined index error $orderData['additional_information'].
-                     Order status to pending if checksum fails to pick up by cron.
+                     Order status set to pending if checksum fails to pick up by cron.
                      Don't update order status by IPN if already complete or processing.
 
 2021-04-06: v2.4.0 : Major rewrite to add support for Magento 2.4.x

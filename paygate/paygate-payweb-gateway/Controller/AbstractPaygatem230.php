@@ -1,4 +1,8 @@
 <?php
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
+
 /*
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -21,6 +25,7 @@ abstract class AbstractPaygatem230 extends AbstractPaygatem220 implements CsrfAw
 {
     /**
      * @inheritDoc
+     * @noinspection PhpUnusedParameterInspection
      */
     public function createCsrfValidationException(
         RequestInterface $request
@@ -30,6 +35,7 @@ abstract class AbstractPaygatem230 extends AbstractPaygatem220 implements CsrfAw
 
     /**
      * @inheritDoc
+     * @noinspection PhpUnusedParameterInspection
      */
     public function validateForCsrf(RequestInterface $request): ?bool
     {

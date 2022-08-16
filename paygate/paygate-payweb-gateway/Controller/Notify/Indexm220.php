@@ -1,4 +1,8 @@
 <?php
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
+
 /*
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -39,7 +43,7 @@ class Indexm220 extends AbstractPaygate
     /**
      * @var Transaction
      */
-    private $transactionModel;
+    private Transaction $transactionModel;
 
     /**
      * indexAction
@@ -94,6 +98,9 @@ class Indexm220 extends AbstractPaygate
         );
     }
 
+    /**
+     * @noinspection PhpUndefinedMethodInspection
+     */
     public function execute()
     {
         echo "OK";
@@ -102,16 +109,13 @@ class Indexm220 extends AbstractPaygate
         $this->_logger->debug($pre . 'bof');
         // PayGate API expects response of 'OK' for Notify function
 
-        $errors       = false;
-        $paygate_data = array();
+        $errors = false;
 
         $notify_data = array();
         // Get notify data
-        if ( ! $errors) {
-            $paygate_data = $this->getPostData();
-            if ($paygate_data === false) {
-                $errors = true;
-            }
+        $paygate_data = $this->getPostData();
+        if ($paygate_data === false) {
+            $errors = true;
         }
 
         // Verify security signature
@@ -134,6 +138,7 @@ class Indexm220 extends AbstractPaygate
                     continue;
                 }
 
+                /** @noinspection PhpConditionAlreadyCheckedInspection */
                 if ($key != 'CHECKSUM' && $key != 'PAYGATE_ID' && $key !== 'AUTH_CODE') {
                     $checkSumParams .= $val;
                 }
@@ -164,8 +169,7 @@ class Indexm220 extends AbstractPaygate
                 'ipn_method'
             ) == '0') {
             // Prepare PayGate Data
-            $status    = filter_var($paygate_data['TRANSACTION_STATUS'], FILTER_SANITIZE_STRING);
-            $reference = filter_var($paygate_data['REFERENCE'], FILTER_SANITIZE_STRING);
+            $status = filter_var($paygate_data['TRANSACTION_STATUS'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $orderId = $this->getRequest()->getParam('eid');
             $order   = $this->orderRepository->get($orderId);
@@ -199,7 +203,7 @@ class Indexm220 extends AbstractPaygate
                                 )->setIsCustomerNotified(true)->save();
                             }
 
-                            // Capture invoice when payment is successfull
+                            // Capture invoice when payment is successful
                             $invoice = $this->_invoiceService->prepareInvoice($order);
                             $invoice->setRequestedCaptureCase(Invoice::CAPTURE_ONLINE);
                             $invoice->register();
@@ -226,14 +230,12 @@ class Indexm220 extends AbstractPaygate
                         }
 
                         exit;
-                        break;
                     case 0:
                     default:
                         // Save Transaction Response
                         $this->createTransaction($order, $paygate_data);
                         $order->cancel()->save();
                         exit;
-                        break;
                 }
             }
         } else {
@@ -243,7 +245,7 @@ class Indexm220 extends AbstractPaygate
     }
 
     // Retrieve post data
-    public function getPostData()
+    public function getPostData(): bool|array
     {
         // Posted variables from ITN
         $nData = $_POST;

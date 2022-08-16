@@ -1,4 +1,12 @@
 <?php
+/** @noinspection PhpMissingFieldTypeInspection */
+
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpPropertyOnlyWrittenInspection */
+
+/** @noinspection PhpUnused */
+
 /*
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -49,109 +57,117 @@ abstract class AbstractPaygatem220 extends AppAction implements RedirectLoginInt
      *
      * @var array
      */
-    protected $_checkoutTypes = [];
+    protected array $_checkoutTypes = [];
 
     /**
      * @var Config
      */
-    protected $_config;
+    protected Config $_config;
 
     /**
-     * @var Quote
+     * @var bool|Quote
      */
-    protected $_quote = false;
+    protected Quote|bool $_quote = false;
 
     /**
      * Config mode type
      *
      * @var string
      */
-    protected $_configType = 'PayGate\PayWeb\Model\Config';
+    protected string $_configType = 'PayGate\PayWeb\Model\Config';
 
-    /** Config method type @var string */
-    protected $_configMethod = Config::METHOD_CODE;
+    /** Config method type @var string|PayGate */
+    protected Paygate|string $_configMethod = Config::METHOD_CODE;
 
     /**
      * Checkout mode type
      *
      * @var string
      */
-    protected $_checkoutType;
+    protected string $_checkoutType;
 
     /**
      * @var \Magento\Customer\Model\Session
      */
-    protected $_customerSession;
+    protected \Magento\Customer\Model\Session $_customerSession;
 
     /**
      * @var Session $_checkoutSession
      */
-    protected $_checkoutSession;
+    protected Session $_checkoutSession;
 
     /**
      * @var OrderFactory
      */
-    protected $_orderFactory;
+    protected OrderFactory $_orderFactory;
 
     /**
      * @var Generic
      */
-    protected $paygateSession;
+    protected Generic $paygateSession;
 
     /**
-     * @var Helper
+     * @var Data|Helper
      */
-    protected $_urlHelper;
+    protected Helper|Data $_urlHelper;
 
     /**
      * @var Url
      */
-    protected $_customerUrl;
+    protected Url $_customerUrl;
 
     /**
      * @var LoggerInterface
      */
-    protected $_logger;
+    protected LoggerInterface $_logger;
 
     /**
      * @var  Order $_order
      */
-    protected $_order;
+    protected Order $_order;
 
     /**
      * @var PageFactory
      */
-    protected $pageFactory;
+    protected PageFactory $pageFactory;
 
     /**
      * @var TransactionFactory
      */
-    protected $_transactionFactory;
+    protected TransactionFactory $_transactionFactory;
 
     /**
      * @var  StoreManagerInterface $storeManager
      */
-    protected $_storeManager;
+    protected StoreManagerInterface $_storeManager;
 
     /**
      * @var PayGate $_paymentMethod
      */
-    protected $_paymentMethod;
+    protected PayGate $_paymentMethod;
 
     /**
      * @var OrderRepositoryInterface $orderRepository
      */
-    protected $orderRepository;
+    protected OrderRepositoryInterface $orderRepository;
 
     /**
      * @var CollectionFactory $_orderCollectionFactory
      */
-    protected $_orderCollectionFactory;
+    protected CollectionFactory $_orderCollectionFactory;
 
     /**
-     * @var Magento\Sales\Model\Order\Payment\Transaction\Builder $_transactionBuilder
+     * @var Magento\Sales\Model\Order\Payment\Transaction\Builder|Builder $_transactionBuilder
      */
-    protected $_transactionBuilder;
+    protected Magento\Sales\Model\Order\Payment\Transaction\Builder|Builder $_transactionBuilder;
+    protected InvoiceService $_invoiceService;
+    protected InvoiceSender $invoiceSender;
+    protected OrderSender $OrderSender;
+    protected $_objectManager;
+    protected $_actionFlag;
+    protected $_redirect;
+    private UrlInterface $_urlBuilder;
+    private DateTime $_date;
 
     public function __construct(
         Context $context,
@@ -215,8 +231,9 @@ abstract class AbstractPaygatem220 extends AppAction implements RedirectLoginInt
      *
      * @return mixed
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @noinspection PhpUndefinedMethodInspection
      */
-    public function getConfigData($field)
+    public function getConfigData(string $field): mixed
     {
         return $this->_paymentMethod->getConfigData($field);
     }
@@ -230,7 +247,7 @@ abstract class AbstractPaygatem220 extends AppAction implements RedirectLoginInt
      * Returns a list of action flags [flag_key] => boolean
      * @return array
      */
-    public function getActionFlagList()
+    public function getActionFlagList(): array
     {
         return [];
     }
@@ -239,7 +256,7 @@ abstract class AbstractPaygatem220 extends AppAction implements RedirectLoginInt
      * Returns login url parameter for redirect
      * @return string
      */
-    public function getLoginUrl()
+    public function getLoginUrl(): string
     {
         return $this->_customerUrl->getLoginUrl();
     }
@@ -248,7 +265,7 @@ abstract class AbstractPaygatem220 extends AppAction implements RedirectLoginInt
      * Returns action name which requires redirect
      * @return string
      */
-    public function getRedirectActionName()
+    public function getRedirectActionName(): string
     {
         return 'index';
     }
@@ -262,6 +279,7 @@ abstract class AbstractPaygatem220 extends AppAction implements RedirectLoginInt
      * Redirect to login page
      *
      * @return void
+     * @noinspection PhpUndefinedMethodInspection
      */
     public function redirectLogin()
     {
@@ -272,8 +290,11 @@ abstract class AbstractPaygatem220 extends AppAction implements RedirectLoginInt
         );
     }
 
-    public function createTransaction($order = null, $paymentData = array())
+    /** @noinspection PhpUndefinedMethodInspection */
+    public function createTransaction($order = null, $paymentData = array()): string
     {
+        $response = '';
+
         if (is_null($order)) {
             $order = $this->_order;
         }
@@ -313,10 +334,12 @@ abstract class AbstractPaygatem220 extends AppAction implements RedirectLoginInt
             $payment->save();
             $order->save();
 
-            return $transaction->save()->getTransactionId();
+            $response = $transaction->save()->getTransactionId();
         } catch (Exception $e) {
             $this->_logger->error($e->getMessage());
         }
+
+        return $response;
     }
 
     /**
@@ -324,6 +347,7 @@ abstract class AbstractPaygatem220 extends AppAction implements RedirectLoginInt
      *
      * @return void
      * @throws LocalizedException
+     * @noinspection PhpUndefinedMethodInspection
      */
     protected function _initCheckout()
     {
@@ -357,7 +381,7 @@ abstract class AbstractPaygatem220 extends AppAction implements RedirectLoginInt
      *
      * @return Generic
      */
-    protected function _getSession()
+    protected function _getSession(): Generic
     {
         return $this->paygateSession;
     }
@@ -367,7 +391,7 @@ abstract class AbstractPaygatem220 extends AppAction implements RedirectLoginInt
      *
      * @return Session
      */
-    protected function _getCheckoutSession()
+    protected function _getCheckoutSession(): Session
     {
         return $this->_checkoutSession;
     }
@@ -375,9 +399,9 @@ abstract class AbstractPaygatem220 extends AppAction implements RedirectLoginInt
     /**
      * Return checkout quote object
      *
-     * @return Quote
+     * @return bool|Quote
      */
-    protected function _getQuote()
+    protected function _getQuote(): bool|Quote
     {
         if ( ! $this->_quote) {
             $this->_quote = $this->_getCheckoutSession()->getQuote();

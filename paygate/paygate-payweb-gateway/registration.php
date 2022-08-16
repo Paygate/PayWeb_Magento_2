@@ -1,4 +1,5 @@
 <?php
+/** @noinspection PhpUndefinedNamespaceInspection */
 
 /*
  * Copyright (c) 2022 PayGate (Pty) Ltd

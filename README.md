@@ -1,5 +1,5 @@
 # PayWeb_Magento_2
-## PayGate Magento plugin v2.5.0 for Magento v2.4.4
+## PayGate Magento plugin v2.5.1 for Magento v2.4.5
 
 This is the PayGate PayWeb3 plugin for Magento 2. Please feel free to contact the PayGate support team at support@paygate.co.za should you require any assistance.
 

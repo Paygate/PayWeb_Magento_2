@@ -8,6 +8,7 @@
  * Released under the GNU General Public License
  */
 -->
+<!--suppress XmlHighlighting -->
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column"
       xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>

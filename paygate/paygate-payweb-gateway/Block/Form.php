@@ -1,4 +1,8 @@
 <?php
+/** @noinspection PhpMissingFieldTypeInspection */
+
+/** @noinspection PhpUndefinedNamespaceInspection */
+
 /**
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -16,33 +20,34 @@ use Magento\Framework\View\Element\Template\Context;
 use PayGate\PayWeb\Helper\Data;
 use PayGate\PayWeb\Model\Config;
 use PayGate\PayWeb\Model\ConfigFactory;
+use PayGate\PayWeb\Model\Paygate;
 
 class Form extends \Magento\Payment\Block\Form
 {
     /**
-     * @var string Payment method code
+     * @var string|Paygate Payment method code
      */
-    protected $_methodCode = Config::METHOD_CODE;
+    protected Paygate|string $_methodCode = Config::METHOD_CODE;
 
     /**
      * @var Data
      */
-    protected $_paygateData;
+    protected Data $_paygateData;
 
     /**
      * @var ConfigFactory
      */
-    protected $paygateConfigFactory;
+    protected ConfigFactory $paygateConfigFactory;
 
     /**
      * @var ResolverInterface
      */
-    protected $_localeResolver;
+    protected ResolverInterface $_localeResolver;
 
     /**
-     * @var Config
+     * @var Config|null
      */
-    protected $_config;
+    protected ?Config $_config;
 
     /**
      * @var bool
@@ -52,7 +57,7 @@ class Form extends \Magento\Payment\Block\Form
     /**
      * @var CurrentCustomer
      */
-    protected $currentCustomer;
+    protected CurrentCustomer $currentCustomer;
 
     /**
      * @var LoggerInterface
@@ -92,9 +97,9 @@ class Form extends \Magento\Payment\Block\Form
     /**
      * Payment method code getter
      *
-     * @return string
+     * @return string|Paygate
      */
-    public function getMethodCode()
+    public function getMethodCode(): string|Paygate
     {
         $pre = __METHOD__ . " : ";
         $this->_logger->debug($pre . 'bof');
@@ -106,6 +111,7 @@ class Form extends \Magento\Payment\Block\Form
      * Set template and redirect message
      *
      * @return null
+     * @noinspection PhpUnused
      */
     protected function _construct()
     {
@@ -113,6 +119,8 @@ class Form extends \Magento\Payment\Block\Form
         $this->_logger->debug($pre . 'bof');
         $this->_config = $this->paygateConfigFactory->create()->setMethod($this->getMethodCode());
         parent::_construct();
+
+        return null;
     }
 
 }

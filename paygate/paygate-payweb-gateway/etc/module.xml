@@ -8,9 +8,10 @@
  * Released under the GNU General Public License
  */
 -->
+<!--suppress XmlHighlighting -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
-    <module name="PayGate_PayWeb" setup_version="2.5.0">
+    <module name="PayGate_PayWeb" setup_version="2.5.1">
         <sequence>
             <module name="Magento_Checkout"/>
             <module name="Magento_Sales"/>

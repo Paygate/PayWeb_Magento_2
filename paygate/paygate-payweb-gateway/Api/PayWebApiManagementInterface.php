@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -15,13 +14,12 @@ interface PayWebApiManagementInterface
     /**
      * get PayWeb Api data.
      *
-     * @param int $id Left hand operand.
-     * @param int $quote_id Right hand operand.
+     * @param int $id Left-hand operand.
      * @param int $quote_id
      *
      * @return string
      * @api
-     *
+     * @noinspection PhpUnused
      */
-    public function getApiData($id, $quote_id);
+    public function getApiData(int $id, int $quote_id): string;
 }

@@ -1,4 +1,8 @@
 <?php
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
+
 /*
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -30,27 +34,27 @@ abstract class AbstractConfig implements ConfigInterface
      *
      * @var ScopeConfigInterface
      */
-    public $_scopeConfig;
+    public ScopeConfigInterface $_scopeConfig;
     /**
      * Current payment method code
      *
      * @var string
      */
-    protected $_methodCode;
+    protected string $_methodCode;
     /**
      * Current store id
      *
      * @var int
      */
-    protected $_storeId;
+    protected int $_storeId;
     /**
      * @var string
      */
-    protected $pathPattern;
+    protected string $pathPattern;
     /**
      * @var MethodInterface
      */
-    protected $methodInstance;
+    protected MethodInterface $methodInstance;
 
     /**
      * @param ScopeConfigInterface $scopeConfig
@@ -68,7 +72,7 @@ abstract class AbstractConfig implements ConfigInterface
      *
      * @return $this
      */
-    public function setMethodInstance($method)
+    public function setMethodInstance(MethodInterface $method): static
     {
         $this->methodInstance = $method;
 
@@ -82,11 +86,11 @@ abstract class AbstractConfig implements ConfigInterface
      *
      * @return $this
      */
-    public function setMethod($method)
+    public function setMethod(MethodInterface|string $method): static
     {
         if ($method instanceof MethodInterface) {
             $this->_methodCode = $method->getCode();
-        } elseif (is_string($method)) {
+        } else {
             $this->_methodCode = $method;
         }
 
@@ -98,7 +102,7 @@ abstract class AbstractConfig implements ConfigInterface
      *
      * @return string
      */
-    public function getMethodCode()
+    public function getMethodCode(): string
     {
         return $this->_methodCode;
     }
@@ -110,9 +114,9 @@ abstract class AbstractConfig implements ConfigInterface
      *
      * @return $this
      */
-    public function setStoreId($storeId)
+    public function setStoreId(int $storeId): static
     {
-        $this->_storeId = (int)$storeId;
+        $this->_storeId = $storeId;
 
         return $this;
     }
@@ -126,8 +130,10 @@ abstract class AbstractConfig implements ConfigInterface
      * @return null|string
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @noinspection PhpUnusedParameterInspection
+     * @noinspection PhpMissingParamTypeInspection
      */
-    public function getValue($key, $storeId = null)
+    public function getValue($key, $storeId = null): ?string
     {
         $underscored = strtolower(preg_replace('/(.)([A-Z])/', "$1_$2", $key));
         $path        = $this->_getSpecificConfigPath($underscored);
@@ -151,6 +157,7 @@ abstract class AbstractConfig implements ConfigInterface
      * @param string $methodCode
      *
      * @return void
+     * @noinspection PhpMissingParamTypeInspection
      */
     public function setMethodCode($methodCode)
     {
@@ -163,6 +170,7 @@ abstract class AbstractConfig implements ConfigInterface
      * @param string $pathPattern
      *
      * @return void
+     * @noinspection PhpMissingParamTypeInspection
      */
     public function setPathPattern($pathPattern)
     {
@@ -176,7 +184,7 @@ abstract class AbstractConfig implements ConfigInterface
      *
      * @return bool
      */
-    public function isMethodAvailable($methodCode = null)
+    public function isMethodAvailable($methodCode = null): bool
     {
         $methodCode = $methodCode ?: $this->_methodCode;
 
@@ -192,10 +200,10 @@ abstract class AbstractConfig implements ConfigInterface
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    public function isMethodActive($method)
+    public function isMethodActive(string $method): bool
     {
         $isEnabled = $this->_scopeConfig->isSetFlag(
-            "payment/{$method}/active",
+            "payment/$method/active",
             ScopeInterface::SCOPE_STORE,
             $this->_storeId
         );
@@ -213,7 +221,7 @@ abstract class AbstractConfig implements ConfigInterface
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function isMethodSupportedForCountry($method = null, $countryCode = null)
+    public function isMethodSupportedForCountry(string $method = null, string $countryCode = null): bool
     {
         return true;
     }
@@ -225,13 +233,13 @@ abstract class AbstractConfig implements ConfigInterface
      *
      * @return string|null
      */
-    protected function _getSpecificConfigPath($fieldName)
+    protected function _getSpecificConfigPath(string $fieldName): ?string
     {
         if ($this->pathPattern) {
             return sprintf($this->pathPattern, $this->_methodCode, $fieldName);
         }
 
-        return "payment/{$this->_methodCode}/{$fieldName}";
+        return "payment/$this->_methodCode/$fieldName";
     }
 
     /**
@@ -241,8 +249,9 @@ abstract class AbstractConfig implements ConfigInterface
      * @param string $value Old value
      *
      * @return string Modified value or old value
+     * @noinspection PhpUnusedParameterInspection
      */
-    protected function _prepareValue($key, $value)
+    protected function _prepareValue(string $key, string $value): string
     {
         return $value;
     }

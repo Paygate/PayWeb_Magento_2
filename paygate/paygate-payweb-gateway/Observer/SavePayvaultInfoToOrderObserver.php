@@ -1,4 +1,8 @@
 <?php
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
+
 /*
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -22,6 +26,7 @@ class SavePayvaultInfoToOrderObserver extends AbstractDataAssignObserver
      * @param Observer $observer
      *
      * @return void
+     * @noinspection PhpUndefinedMethodInspection
      */
     public function execute(Observer $observer)
     {

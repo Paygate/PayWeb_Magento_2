@@ -1,4 +1,7 @@
 <?php
+/** @noinspection PhpUnused */
+
+/** @noinspection PhpUndefinedNamespaceInspection */
 
 namespace PayGate\PayWeb\Setup;
 
@@ -12,14 +15,16 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      *
-     * @var Magento\Sales\Setup\SalesSetup
+     * @var Magento\Sales\Setup\SalesSetup|SalesSetup
      */
-    private $_salesSetup;
+    private SalesSetup|Magento\Sales\Setup\SalesSetup $_salesSetup;
 
     /**
      * Init
      *
-     * @param EavSetupFactory $eavSetupFactory
+     * @param SalesSetup $SalesSetup
+     *
+     * @noinspection PhpUnused
      */
     public function __construct(
         SalesSetup $SalesSetup
@@ -30,6 +35,8 @@ class UpgradeData implements UpgradeDataInterface
     /**
      * {@inheritdoc}
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     * @noinspection PhpUnused
+     * @noinspection PhpUnusedParameterInspection
      */
     public function upgrade(ModuleDataSetupInterface $setup, ModuleContextInterface $context)
     {

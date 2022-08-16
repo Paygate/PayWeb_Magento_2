@@ -1,3 +1,5 @@
+// noinspection UnnecessaryLocalVariableJS,JSCheckFunctionSignatures,JSUnresolvedFunction,JSUnresolvedVariable,EqualityComparisonWithCoercionJS,JSUnusedGlobalSymbols,JSUnusedLocalSymbols
+
 /*
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -36,23 +38,21 @@ define(
         template: 'PayGate_PayWeb/payment/paygate'
       },
       getData: function () {
-
-        var paymentType = $('input[name=payment-type]:checked').val()
+        let payvault = 0
+        let paymentType = $('input[name=payment-type]:checked').val()
         if ($('#paygate-payvault-method').prop('checked') == true) {
-          var payvault = 1
+          payvault = 1
         } else {
-          var savedCard = $('#saved_cards').find(':selected').val()
+          const savedCard = $('#saved_cards').find(':selected').val()
           if (savedCard != 'undefined') {
             payvault = savedCard
-          } else {
-            payvault = 0
           }
         }
         if (null == paymentType || typeof paymentType == 'undefined') {
           paymentType = 0
         }
 
-        var data = {
+        const data = {
           'method': this.item.method,
           'additional_data': {
             'paygate-payvault-method': payvault,
@@ -67,7 +67,7 @@ define(
        * @returns {Boolean}
        */
       isVaultEnabled: function () {
-        var isVault = window.checkoutConfig.payment.paygate.isVault
+        const isVault = window.checkoutConfig.payment.paygate.isVault
         return isVault
       },
 
@@ -75,7 +75,7 @@ define(
        * @returns {json}
        */
       getPaymentTypesList: function () {
-        var paymentTypes = window.checkoutConfig.payment.paygate.paymentTypeList
+        const paymentTypes = window.checkoutConfig.payment.paygate.paymentTypeList
         return paymentTypes
       },
 
@@ -83,7 +83,7 @@ define(
        * @returns {json}
        */
       getSavedCardList: function () {
-        var savedCard = window.checkoutConfig.payment.paygate.saved_card_data
+        const savedCard = window.checkoutConfig.payment.paygate.saved_card_data
         return savedCard
       },
 
@@ -91,7 +91,7 @@ define(
        * @returns {json}
        */
       checkSavedCard: function () {
-        var savedCard = window.checkoutConfig.payment.paygate.card_count
+        const savedCard = window.checkoutConfig.payment.paygate.card_count
         return savedCard
       },
 
@@ -99,18 +99,16 @@ define(
        * @returns {Boolean}
        */
       isPaymentTypes: function () {
-        var paymentTypes = window.checkoutConfig.payment.paygate.paymentTypes
-        if ('null' != paymentTypes) {
-          return true
-        }
-        return false
+        const paymentTypes = window.checkoutConfig.payment.paygate.paymentTypes
+        return 'null' != paymentTypes
+
       },
 
       /**
        * @returns {Boolean}
        */
       paymentTypesEnabled: function () {
-        var paymentTypes = window.checkoutConfig.payment.paygate.enablePaymentTypes
+        const paymentTypes = window.checkoutConfig.payment.paygate.enablePaymentTypes
         return paymentTypes
       },
 
@@ -118,10 +116,10 @@ define(
         if (event) {
           event.preventDefault()
         }
-        var self = this,
-          placeOrder,
-          emailValidationResult = customer.isLoggedIn(),
-          loginFormSelector = 'form[data-role=email-with-possible-login]'
+        const self = this
+        let placeOrder,
+          emailValidationResult = customer.isLoggedIn()
+        const loginFormSelector = 'form[data-role=email-with-possible-login]'
         if (!customer.isLoggedIn()) {
           $(loginFormSelector).validation()
           emailValidationResult = Boolean($(loginFormSelector + ' input[name=username]').valid())
