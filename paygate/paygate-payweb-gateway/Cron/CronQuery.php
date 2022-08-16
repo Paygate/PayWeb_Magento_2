@@ -1,4 +1,10 @@
 <?php
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
+
+/** @noinspection PhpPropertyOnlyWrittenInspection */
+
 /**
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -43,39 +49,39 @@ class CronQuery
     /**
      * @var TransactionSearchResultInterfaceFactory
      */
-    protected $transactionSearchResultInterfaceFactory;
+    protected TransactionSearchResultInterfaceFactory $transactionSearchResultInterfaceFactory;
     /**
      * @var LoggerInterface
      */
-    protected $_logger;
+    protected LoggerInterface $_logger;
     /**
      * @var PayGate $_paymentMethod
      */
-    protected $_paymentMethod;
+    protected PayGate $_paymentMethod;
     /**
      * @var CollectionFactory $_orderCollectionFactory
      */
-    protected $_orderCollectionFactory;
+    protected CollectionFactory $_orderCollectionFactory;
     /**
      * @var OrderRepositoryInterface $orderRepository
      */
-    protected $orderRepository;
+    protected OrderRepositoryInterface $orderRepository;
     /**
-     * @var Area
+     * @var Area|State
      */
-    private $state;
+    private State|Area $state;
     /**
      * @var \Magento\Framework\DB\Transaction
      */
-    private $transactionModel;
+    private \Magento\Framework\DB\Transaction $transactionModel;
     /**
      * @var PayGateConfig
      */
-    private $paygateConfig;
+    private PayGateConfig $paygateConfig;
     /**
      * @var PaygateHelper
      */
-    private $paygateHelper;
+    private PaygateHelper $paygateHelper;
 
     public function __construct(
         PayGate $paymentMethod,

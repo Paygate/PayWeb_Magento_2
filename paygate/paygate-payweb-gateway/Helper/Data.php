@@ -1,4 +1,11 @@
 <?php
+/** @noinspection PhpMissingFieldTypeInspection */
+
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
+/** @noinspection PhpPropertyOnlyWrittenInspection */
+
 /**
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -39,64 +46,58 @@ class Data extends AbstractHelper
      *
      * @var bool
      */
-    protected static $_shouldAskToCreateBillingAgreement = false;
+    protected static bool $_shouldAskToCreateBillingAgreement = false;
 
     /**
      * @var \Magento\Payment\Helper\Data
      */
-    protected $_paymentData;
+    protected \Magento\Payment\Helper\Data $_paymentData;
     /**
      * @var LoggerInterface
      */
     protected $_logger;
     /**
-     * @var Magento\Sales\Model\Order\Payment\Transaction\Builder $_transactionBuilder
+     * @var Magento\Sales\Model\Order\Payment\Transaction\Builder|Builder $_transactionBuilder
      */
-    protected $_transactionBuilder;
+    protected Magento\Sales\Model\Order\Payment\Transaction\Builder|Builder $_transactionBuilder;
     /**
      * @var TransactionSearchResultInterfaceFactory
      */
-    protected $transactionSearchResultInterfaceFactory;
+    protected TransactionSearchResultInterfaceFactory $transactionSearchResultInterfaceFactory;
     /**
      * @var OrderSender
      */
-    protected $OrderSender;
+    protected OrderSender $OrderSender;
     /**
      * @var InvoiceService
      */
-    protected $_invoiceService;
+    protected InvoiceService $_invoiceService;
     /**
      * @var InvoiceSender
      */
-    protected $invoiceSender;
+    protected InvoiceSender $invoiceSender;
     /**
      * @var DBTransaction
      */
-    protected $dbTransaction;
+    protected DBTransaction $dbTransaction;
     /**
      * Logging instance
      * @var Logger
      */
-    protected $_paygatelogger;
+    protected Logger $_paygatelogger;
     /**
      * @var array
      */
-    private $methodCodes;
+    private array $methodCodes;
     /**
-     * @var ConfigFactory
+     * @var BaseFactory|ConfigFactory
      */
-    private $configFactory;
+    private ConfigFactory|BaseFactory $configFactory;
     /**
-     * @var ConfigFactory
+     * @var ConfigFactory|PayGateConfig
      */
-    private $_paygateconfig;
+    private ConfigFactory|PayGateConfig $_paygateconfig;
 
-    /**
-     * @param Context $context
-     * @param \Magento\Payment\Helper\Data $paymentData
-     * @param BaseFactory $configFactory
-     * @param array $methodCodes
-     */
     public function __construct(
         Context $context,
         \Magento\Payment\Helper\Data $paymentData,
@@ -140,7 +141,7 @@ class Data extends AbstractHelper
      *
      * @return bool
      */
-    public function shouldAskToCreateBillingAgreement()
+    public function shouldAskToCreateBillingAgreement(): bool
     {
         $pre = __METHOD__ . " : ";
         $this->_logger->debug($pre . "bof");
@@ -152,12 +153,12 @@ class Data extends AbstractHelper
     /**
      * Retrieve available billing agreement methods
      *
-     * @param null|string|bool|int|Store $store
+     * @param bool|int|string|Store|null $store
      * @param Quote|null $quote
      *
      * @return MethodInterface[]
      */
-    public function getBillingAgreementMethods($store = null, $quote = null)
+    public function getBillingAgreementMethods(Store|bool|int|string $store = null, Quote $quote = null): array
     {
         $pre = __METHOD__ . " : ";
         $this->_logger->debug($pre . 'bof');
@@ -177,13 +178,12 @@ class Data extends AbstractHelper
         return $this->_paygateconfig->getConfig($field);
     }
 
-    public function getQueryResult($orderquery)
+    /**
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function getQueryResult($orderquery): bool|string
     {
-        if (isset($orderquery['store_id'])) {
-            $store_id = $orderquery['store_id'];
-        } else {
-            $store_id = "";
-        }
+        $store_id = $orderquery['store_id'] ?? "";
 
         $encryption_key = $this->_paygateconfig->getEncryptionKey($store_id);
         $paygate_id     = $this->_paygateconfig->getPaygateId($store_id);
@@ -232,8 +232,10 @@ class Data extends AbstractHelper
         return $result;
     }
 
-    public function updatePaymentStatus($order, $resp)
+    public function updatePaymentStatus($order, $resp): bool
     {
+        $response = false;
+
         if (is_array($resp) && count($resp) > 0) {
             $paymentData = array();
             foreach ($resp as $param) {
@@ -270,6 +272,8 @@ class Data extends AbstractHelper
                     $order->setStatus($status);
                     $order->setState($status);
                     $order->save();
+
+                    $response = true;
                 } catch (Exception $ex) {
                     $this->_logger->error($ex->getMessage());
                 }
@@ -280,6 +284,8 @@ class Data extends AbstractHelper
                 $order->save();
             }
         }
+
+        return $response;
     }
 
     public function restoreOrder($order)
@@ -301,7 +307,7 @@ class Data extends AbstractHelper
             )->setIsCustomerNotified(true)->save();
         }
 
-        // Capture invoice when payment is successfull
+        // Capture invoice when payment is successful
         $invoice = $this->_invoiceService->prepareInvoice($order);
         $invoice->setRequestedCaptureCase(Invoice::CAPTURE_ONLINE);
         $invoice->register();
@@ -323,8 +329,9 @@ class Data extends AbstractHelper
         }
     }
 
-    public function createTransaction($order = null, $paymentData = array())
+    public function createTransaction($order = null, $paymentData = array()): string
     {
+        $response = '';
         try {
             // Get payment object from order object
             $payment = $order->getPayment();
@@ -358,10 +365,11 @@ class Data extends AbstractHelper
             $payment->save();
             $order->save();
 
-            return $transaction->save()->getTransactionId();
+            $response = $transaction->save()->getTransactionId();
         } catch (Exception $e) {
             $this->_logger->error($e->getMessage());
         }
-    }
 
+        return $response;
+    }
 }

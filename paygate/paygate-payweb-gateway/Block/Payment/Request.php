@@ -1,4 +1,10 @@
 <?php
+/** @noinspection PhpMissingFieldTypeInspection */
+
+/** @noinspection PhpUnused */
+
+/** @noinspection PhpUndefinedNamespaceInspection */
+
 /**
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -23,27 +29,28 @@ class Request extends Template
     /**
      * @var PayGate $_paymentMethod
      */
-    protected $_paymentMethod;
+    protected PayGate $_paymentMethod;
 
     /**
      * @var OrderFactory
      */
-    protected $_orderFactory;
+    protected OrderFactory $_orderFactory;
 
     /**
      * @var Session
      */
-    protected $_checkoutSession;
+    protected Session $_checkoutSession;
 
     /**
      * @var ReadFactory $readFactory
      */
-    protected $readFactory;
+    protected ReadFactory $readFactory;
 
     /**
      * @var Reader $reader
      */
-    protected $reader;
+    protected Reader $reader;
+    protected $_isScopePrivate;
 
     /**
      * @param Context $context
@@ -53,6 +60,8 @@ class Request extends Template
      * @param Reader $reader
      * @param PayGate $paymentMethod
      * @param array $data
+     *
+     * @noinspection PhpUnused
      */
     public function __construct(
         Context $context,
@@ -72,6 +81,9 @@ class Request extends Template
         $this->_paymentMethod  = $paymentMethod;
     }
 
+    /** @noinspection PhpUnused
+     * @noinspection PhpUndefinedMethodInspection
+     */
     public function _prepareLayout()
     {
         $this->setMessage('Redirecting to PayGate')

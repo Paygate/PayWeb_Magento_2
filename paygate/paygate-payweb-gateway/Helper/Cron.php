@@ -1,4 +1,10 @@
 <?php
+/** @noinspection PhpMissingFieldTypeInspection */
+
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
+
 /*
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -27,9 +33,6 @@ class Cron extends AbstractHelper
 
     /**
      * @param Context $context
-     * @param \Magento\Payment\Helper\Data $paymentData
-     * @param BaseFactory $configFactory
-     * @param array $methodCodes
      */
     public function __construct(
         Context $context

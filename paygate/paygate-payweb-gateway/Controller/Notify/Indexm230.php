@@ -1,4 +1,8 @@
 <?php
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
+
 /*
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -19,6 +23,7 @@ class Indexm230 extends Indexm220 implements CsrfAwareActionInterface
 {
     /**
      * @inheritDoc
+     * @noinspection PhpUnusedParameterInspection
      */
     public function createCsrfValidationException(RequestInterface $request): ?InvalidRequestException
     {
@@ -27,6 +32,7 @@ class Indexm230 extends Indexm220 implements CsrfAwareActionInterface
 
     /**
      * @inheritDoc
+     * @noinspection PhpUnusedParameterInspection
      */
     public function validateForCsrf(RequestInterface $request): ?bool
     {

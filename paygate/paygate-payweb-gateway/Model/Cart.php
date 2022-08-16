@@ -1,4 +1,9 @@
 <?php
+/** @noinspection PhpMissingFieldTypeInspection */
+
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
 /*
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -20,14 +25,20 @@ class Cart extends \Magento\Payment\Model\Cart
     /**
      * @var bool
      */
-    protected $_areAmountsValid = false;
+    protected bool $_areAmountsValid = false;
+    protected $_salesModel;
+    protected $_salesModelItems;
+    protected $_customItems;
+    protected $_amounts;
 
     /**
      * Get shipping, tax, subtotal and discount amounts all together
      *
      * @return array
+     * @noinspection PhpUndefinedClassConstantInspection
+     * @noinspection PhpUndefinedMethodInspection
      */
-    public function getAmounts()
+    public function getAmounts(): array
     {
         $this->_collectItemsAndAmounts();
 
@@ -53,7 +64,7 @@ class Cart extends \Magento\Payment\Model\Cart
      *
      * @return bool
      */
-    public function hasNegativeItemAmount()
+    public function hasNegativeItemAmount(): bool
     {
         foreach ($this->_customItems as $item) {
             if ($item->getAmount() < 0) {
@@ -81,6 +92,8 @@ class Cart extends \Magento\Payment\Model\Cart
      * Check the line items and totals according to PayGate business logic limitations
      *
      * @return void
+     * @noinspection PhpUndefinedClassConstantInspection
+     * @noinspection PhpUndefinedMethodInspection
      */
     protected function _validate()
     {
@@ -109,7 +122,7 @@ class Cart extends \Magento\Payment\Model\Cart
         }
 
         /**
-         * Numbers are intentionally converted to strings by reason of possible comparison error
+         * Numbers are intentionally converted to string by reason of possible comparison error
          * see http://php.net/float
          */
         // Match sum of all the items and totals to the reference amount
@@ -129,6 +142,7 @@ class Cart extends \Magento\Payment\Model\Cart
      * Import items from sales model with workarounds for PayGate
      *
      * @return void
+     * @noinspection PhpUndefinedMethodInspection
      */
     protected function _importItemsFromSalesModel()
     {
@@ -192,6 +206,7 @@ class Cart extends \Magento\Payment\Model\Cart
      * @param SalesModelInterface $salesEntity
      *
      * @return void
+     * @noinspection PhpUndefinedMethodInspection
      */
     protected function _applyDiscountTaxCompensationWorkaround(
         SalesModelInterface $salesEntity

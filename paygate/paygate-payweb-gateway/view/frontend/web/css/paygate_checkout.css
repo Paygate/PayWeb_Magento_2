@@ -24,18 +24,6 @@
     float: left;
 }
 
-.payment-types ul li .input-type-attr {
-    font-family: inherit
-}
-
-.payment-types ul li .label-attr {
-    min-width: 150px;
-}
-
-.payment-types ul li .img-attr {
-    font-family: inherit
-}
-
 div.payment-types {
     margin-bottom: 20px !important;
 }

@@ -1,4 +1,12 @@
 <?php
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpMissingFieldTypeInspection */
+
+/** @noinspection PhpUnused */
+
+/** @noinspection PhpPropertyOnlyWrittenInspection */
+
 /*
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -46,19 +54,20 @@ class Success extends AbstractPaygate
     /**
      * @var PayGate $_paymentMethod
      */
-    protected $_paymentMethod;
+    protected PayGate $_paymentMethod;
+    protected $messageManager;
     /**
      * @var Transaction
      */
-    private $transactionModel;
+    private Transaction $transactionModel;
     /**
      * @var ScopeConfigInterface
      */
-    private $scopeConfigInterface;
+    private ScopeConfigInterface $scopeConfigInterface;
     /**
      * @var Order
      */
-    private $orderModel;
+    private Order $orderModel;
 
     public function __construct(
         Context $context,
@@ -115,6 +124,7 @@ class Success extends AbstractPaygate
 
     /**
      * Execute on paygate/redirect/success
+     * @noinspection PhpUndefinedMethodInspection
      */
     public function execute()
     {
@@ -152,9 +162,9 @@ class Success extends AbstractPaygate
             $encryptionKey = $this->_paymentMethod->getEncryptionKey();
 
             $pay_request_id        = $data['PAY_REQUEST_ID'];
-            $status                = isset($data['TRANSACTION_STATUS']) ? $data['TRANSACTION_STATUS'] : "";
+            $status                = $data['TRANSACTION_STATUS'] ?? "";
             $reference             = $order->getRealOrderId();
-            $checksum              = isset($data['CHECKSUM']) ? $data['CHECKSUM'] : "";
+            $checksum              = $data['CHECKSUM'] ?? "";
             $data['PAYMENT_TITLE'] = "PAYGATE_PAYWEB";
 
             $checksum_source = $paygateId . $pay_request_id . $status . $reference . $encryptionKey;
@@ -167,7 +177,6 @@ class Success extends AbstractPaygate
                 $canProcessThisOrder = $this->_paymentMethod->getConfigData(
                         'ipn_method'
                     ) != '0' && $order->getPaywebPaymentProcessed() != 1;
-                $api                 = $this->getRequest()->getParam('api');
 
                 switch ($status) {
                     case 1:
@@ -194,7 +203,7 @@ class Success extends AbstractPaygate
                                 )->setIsCustomerNotified(true)->save();
                             }
 
-                            // Capture invoice when payment is successfull
+                            // Capture invoice when payment is successful
                             $invoice = $this->_invoiceService->prepareInvoice($order);
                             $invoice->setRequestedCaptureCase(Invoice::CAPTURE_ONLINE);
                             $invoice->register();
@@ -223,7 +232,6 @@ class Success extends AbstractPaygate
                         // Invoice capture code completed
                         echo $redirectToSuccessScript;
                         exit;
-                        break;
                     case 2:
                         // Save Transaction Response
                         $this->messageManager->addNotice('Transaction has been declined.');
@@ -235,9 +243,7 @@ class Success extends AbstractPaygate
                         }
                         echo $redirectToCartScript;
                         exit;
-                        break;
-                    case 0:
-                    case 4:
+                    default:
                         $this->messageManager->addNotice('Transaction has been cancelled');
                         $this->_checkoutSession->restoreQuote();
                         if ($canProcessThisOrder) {
@@ -247,18 +253,11 @@ class Success extends AbstractPaygate
                         }
                         echo $redirectToCartScript;
                         exit;
-                        break;
                 }
             } else {
                 $this->messageManager->addNotice('Transaction has been declined');
                 $this->_checkoutSession->restoreQuote();
-                if ($canProcessThisOrder) {
-                    $order->setPaywebPaymentProcessed(1)->save();
-                    $this->createTransaction($order, $data);
-                    $order->setState(Order::STATE_PENDING_PAYMENT)->setStatus(
-                        'pending_payment'
-                    )->save();
-                }
+
                 echo $redirectToCartScript;
             }
         } catch (Exception $e) {
@@ -322,6 +321,7 @@ class Success extends AbstractPaygate
         return $this->orderModel->loadByIncrementId($incrementId);
     }
 
+    /** @noinspection PhpUndefinedMethodInspection */
     public function setlastOrderDetails()
     {
         $orderId      = $this->getRequest()->getParam('gid');
@@ -331,7 +331,6 @@ class Success extends AbstractPaygate
         $this->_checkoutSession->setData('last_success_quote_id', $order->getQuoteId());
         $this->_checkoutSession->setData('last_quote_id', $order->getQuoteId());
         $this->_checkoutSession->setData('last_real_order_id', $orderId);
-        $_SESSION['customer_base']['customer_id']           = $order->getCustomerId();
         $_SESSION['default']['visitor_data']['customer_id'] = $order->getCustomerId();
         $_SESSION['customer_base']['customer_id']           = $order->getCustomerId();
     }

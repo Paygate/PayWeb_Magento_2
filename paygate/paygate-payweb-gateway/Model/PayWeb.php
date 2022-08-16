@@ -1,4 +1,8 @@
 <?php
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
+
 /**
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -36,33 +40,33 @@ class PayWeb implements PayWebApiInterface
 
     const SECURE = '_secure';
 
-    protected $cart;
+    protected \Magento\Checkout\Model\Cart $cart;
 
-    protected $_customerRepositoryInterface;
+    protected CustomerRepositoryInterface $_customerRepositoryInterface;
 
-    protected $quoteFactory;
+    protected QuoteFactory $quoteFactory;
 
-    protected $_storeManager;
+    protected StoreManagerInterface $_storeManager;
 
     /**
      * @var UrlInterface
      */
-    protected $_urlBuilder;
+    protected UrlInterface $_urlBuilder;
 
     /**
      * @var FormKey
      */
-    protected $_formKey;
+    protected FormKey $_formKey;
 
     /**
      * @var PayGateModel
      */
-    protected $_paygatemodel;
+    protected PayGate $_paygatemodel;
 
     /**
-     * @var PayGate\PayWeb\Helper\Data
+     * @var PayGate\PayWeb\Helper\Data|Data
      */
-    protected $_PaygateHelper;
+    protected PayGate\PayWeb\Helper\Data|Data $_PaygateHelper;
 
     public function __construct(
         \Magento\Checkout\Model\Cart $cart,
@@ -91,9 +95,14 @@ class PayWeb implements PayWebApiInterface
 
     /**
      * This is where we compile data posted by the form to PayGate
+     *
+     * @param $customerId
+     * @param $order_id
+     *
      * @return array
+     * @noinspection PhpUnusedParameterInspection
      */
-    public function getStandardCheckoutFormFields($customerId, $order_id)
+    public function getStandardCheckoutFormFields($customerId, $order_id): array
     {
         $paygateModel  = $this->_paygatemodel;
         $encryptionKey = $paygateModel->getEncryptionKey();
@@ -117,7 +126,7 @@ class PayWeb implements PayWebApiInterface
         } else {
             $result['PAYMENT_TITLE'] = "PAYGATE_PAYWEB";
             $this->_PaygateHelper->createTransaction($order, $result);
-            if (strpos($response, "ERROR") === false) {
+            if ( ! str_contains($response, "ERROR")) {
                 $processData = array(
                     'PAY_REQUEST_ID' => $result['PAY_REQUEST_ID'],
                     'CHECKSUM'       => $result['CHECKSUM'],

@@ -1,4 +1,6 @@
 <?php
+/** @noinspection PhpUnused */
+
 /*
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -24,12 +26,11 @@ class Info
      * Apply a filter upon value getting
      *
      * @param string $value
-     * @param string $key
      *
      * @return string
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    protected function _getValue($value)
+    protected function _getValue(string $value): string
     {
         $label       = '';
         $outputValue = implode(', ', (array)$value);

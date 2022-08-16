@@ -10,12 +10,13 @@
 ?>
 <div class="rk button">
     <form action="<?php
+    /** @noinspection PhpUndefinedVariableInspection */
     echo $block->getGateUrl(); ?>" method="POST">
         <?php
         foreach ($block->getPostData() as $key => $value): ?>
             <input type="hidden" name="<?php
             echo $key; ?>" value="<?php
-            echo $value; ?>"></input>
+            echo $value; ?>">
         <?php
         endforeach; ?>
         <button type="submit">Pay</button>

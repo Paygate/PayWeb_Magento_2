@@ -1,4 +1,16 @@
 <?php
+/** @noinspection PhpMissingParamTypeInspection */
+
+/** @noinspection PhpMissingParamTypeInspection */
+
+/** @noinspection PhpMissingReturnTypeInspection */
+
+/** @noinspection PhpMissingFieldTypeInspection */
+
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
+
 /**
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -12,6 +24,8 @@ namespace PayGate\PayWeb\Model;
 use DateInterval;
 use DateTime;
 use DateTimeZone;
+use Exception;
+use JetBrains\PhpStorm\Pure;
 use Magento\Customer\Model\Session;
 use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Framework\Api\ExtensionAttributesFactory;
@@ -82,7 +96,7 @@ class PayGate extends AbstractMethod
     const PAYPAL_DESCRIPTION          = 'PayPal';
     const SECURE                      = '_secure';
     /**
-     * @var string
+     * @var string|PayGate
      */
     protected $_code = Config::METHOD_CODE;
     /**
@@ -236,6 +250,10 @@ class PayGate extends AbstractMethod
         self::SCANTOPAY_METHOD     => self::SCANTOPAY_DESCRIPTION,
         self::PAYPAL_METHOD        => self::PAYPAL_DESCRIPTION,
     ];
+    protected $_logger;
+    protected $_scopeConfig;
+    protected PaymentTokenManagementInterface $paymentTokenManagementInterface;
+    protected Session $session;
 
     public function __construct(
         Context $context,
@@ -304,11 +322,12 @@ class PayGate extends AbstractMethod
      * Store setter
      * Also updates store ID in config object
      *
-     * @param Store|int $store
+     * @param int|Store $store
      *
      * @return $this
+     * @noinspection PhpUndefinedMethodInspection
      */
-    public function setStore($store)
+    public function setStore($store): static
     {
         $this->setData('store', $store);
 
@@ -346,7 +365,7 @@ class PayGate extends AbstractMethod
     /**
      * Check whether payment method can be used
      *
-     * @param CartInterface|Quote|null $quote
+     * @param CartInterface|null $quote
      *
      * @return bool
      */
@@ -382,6 +401,7 @@ class PayGate extends AbstractMethod
     /**
      * This is where we compile data posted by the form to PayGate
      * @return array
+     * @noinspection PhpUndefinedMethodInspection
      */
     public function getStandardCheckoutFormFields()
     {
@@ -446,7 +466,7 @@ class PayGate extends AbstractMethod
             $processData             = array();
             $result['PAYMENT_TITLE'] = "PAYGATE_PAYWEB";
             $this->_PaygateHelper->createTransaction($order, $result);
-            if (strpos($response, "ERROR") === false) {
+            if ( ! str_contains($response, "ERROR")) {
                 $processData = array(
                     'PAY_REQUEST_ID' => $result['PAY_REQUEST_ID'],
                     'CHECKSUM'       => $result['CHECKSUM'],
@@ -457,7 +477,8 @@ class PayGate extends AbstractMethod
         return ($processData);
     }
 
-    public function prepareFields($order, $api = null)
+    /** @noinspection PhpUndefinedMethodInspection */
+    public function prepareFields($order, $api = null): array
     {
         $billing   = $order->getBillingAddress();
         $formKey   = $this->_formKey->getFormKey();
@@ -521,68 +542,32 @@ class PayGate extends AbstractMethod
         return $fields;
     }
 
-    public function getPaymentTypeDetail($ptd)
+    public function getPaymentTypeDetail($ptd): string
     {
-        switch ($ptd) {
-            case self::BANK_TRANSFER:
-                return self::BANK_TRANSFER_METHOD_DETAIL;
-                break;
-            case self::ZAPPER_METHOD:
-                return self::ZAPPER_DESCRIPTION;
-                break;
-            case self::SNAPSCAN_METHOD:
-                return self::SNAPSCAN_DESCRIPTION;
-                break;
-            case self::MOBICRED_METHOD:
-                return self::MOBICRED_DESCRIPTION;
-                break;
-            case self::MOMOPAY_METHOD:
-                return self::MOMOPAY_METHOD_DETAIL;
-                break;
-            case self::SCANTOPAY_METHOD:
-                return self::SCANTOPAY_DESCRIPTION;
-                break;
-            case self::PAYPAL_METHOD:
-                return self::PAYPAL_DESCRIPTION;
-                break;
-            default:
-                return self::CREDIT_CARD_DESCRIPTION;
-                break;
-        }
+        return match ($ptd) {
+            self::BANK_TRANSFER => self::BANK_TRANSFER_METHOD_DETAIL,
+            self::ZAPPER_METHOD => self::ZAPPER_DESCRIPTION,
+            self::SNAPSCAN_METHOD => self::SNAPSCAN_DESCRIPTION,
+            self::MOBICRED_METHOD => self::MOBICRED_DESCRIPTION,
+            self::MOMOPAY_METHOD => self::MOMOPAY_METHOD_DETAIL,
+            self::SCANTOPAY_METHOD => self::SCANTOPAY_DESCRIPTION,
+            self::PAYPAL_METHOD => self::PAYPAL_DESCRIPTION,
+            default => self::CREDIT_CARD_DESCRIPTION,
+        };
     }
 
-    public function getPaymentType($pt)
+    public function getPaymentType($pt): string
     {
-        switch ($pt) {
-            case self::BANK_TRANSFER:
-                return self::BANK_TRANSFER;
-                break;
-            case self::ZAPPER_METHOD:
-                return 'EW';
-                break;
-            case self::SNAPSCAN_METHOD:
-                return 'EW';
-                break;
-            case self::MOBICRED_METHOD:
-                return 'EW';
-                break;
-            case self::MOMOPAY_METHOD:
-                return 'EW';
-                break;
-            case self::SCANTOPAY_METHOD:
-                return 'EW';
-                break;
-            case self::PAYPAL_METHOD:
-                return 'EW';
-                break;
-            default:
-                return 'CC';
-                break;
-        }
+        return match ($pt) {
+            self::BANK_TRANSFER => self::BANK_TRANSFER,
+            self::ZAPPER_METHOD, self::PAYPAL_METHOD, self::SCANTOPAY_METHOD, self::MOMOPAY_METHOD, self::MOBICRED_METHOD, self::SNAPSCAN_METHOD => 'EW',
+            default => 'CC',
+        };
     }
 
     /**
      * getTotalAmount
+     * @noinspection PhpUndefinedMethodInspection
      */
     public function getTotalAmount($order)
     {
@@ -635,7 +620,7 @@ class PayGate extends AbstractMethod
      *
      * @return $this
      */
-    public function initialize($paymentAction, $stateObject)
+    public function initialize($paymentAction, $stateObject): static
     {
         $stateObject->setState(Order::STATE_PENDING_PAYMENT);
         $stateObject->setStatus('pending_payment');
@@ -712,12 +697,12 @@ class PayGate extends AbstractMethod
      *
      * @return bool
      */
-    public function addLinkToOrderPayment($paymentTokenId, $orderPaymentId)
+    public function addLinkToOrderPayment(int $paymentTokenId, int $orderPaymentId): bool
     {
         return $this->paymentTokenResourceModel->addLinkToOrderPayment($paymentTokenId, $orderPaymentId);
     }
 
-    public function getCountryDetails($code2)
+    #[Pure] public function getCountryDetails($code2)
     {
         $countries = CountryData::getCountries();
 
@@ -726,6 +711,8 @@ class PayGate extends AbstractMethod
                 return $val[2];
             }
         }
+
+        return '';
     }
 
     public function getOrderbyOrderId($order_id)
@@ -736,7 +723,7 @@ class PayGate extends AbstractMethod
     /**
      * @inheritdoc
      */
-    public function fetchTransactionInfo(InfoInterface $payment, $transactionId)
+    public function fetchTransactionInfo(InfoInterface $payment, $transactionId): array
     {
         $state       = ObjectManager::getInstance()->get('\Magento\Framework\App\State');
         $paymentData = array();
@@ -780,9 +767,10 @@ class PayGate extends AbstractMethod
      * @param Payment $payment
      * @param float $amount
      *
-     * @return $this
+     * @return void
+     * @noinspection PhpUnusedParameterInspection
      */
-    protected function _placeOrder(Payment $payment, $amount)
+    protected function _placeOrder(Payment $payment, float $amount)
     {
         $pre = __METHOD__ . " : ";
         $this->_logger->debug($pre . 'bof');
@@ -795,7 +783,7 @@ class PayGate extends AbstractMethod
      *
      * @return false|TransactionInterface
      */
-    protected function getOrderTransaction($payment)
+    protected function getOrderTransaction(OrderPaymentInterface $payment): bool|TransactionInterface
     {
         return $this->transactionRepository->getByTransactionType(
             Transaction::TYPE_ORDER,
@@ -826,24 +814,34 @@ class PayGate extends AbstractMethod
     }
 
     /**
-     * @param Payment $payment
+     *
+     * @param $month
+     * @param $year
      *
      * @return string
      */
     private function getExpirationDate($month, $year)
     {
-        $expDate = new DateTime(
-            $year
-            . '-'
-            . $month
-            . '-'
-            . '01'
-            . ' '
-            . '00:00:00',
-            new DateTimeZone('UTC')
-        );
-        $expDate->add(new DateInterval('P1M'));
+        $response = '';
+        try {
+            $expDate = new DateTime(
+                $year
+                . '-'
+                . $month
+                . '-'
+                . '01'
+                . ' '
+                . '00:00:00',
+                new DateTimeZone('UTC')
+            );
 
-        return $expDate->format('Y-m-d 00:00:00');
+            $expDate->add(new DateInterval('P1M'));
+
+            $response = $expDate->format('Y-m-d 00:00:00');
+        } catch (Exception $e) {
+            $this->_logger->debug($e->getMessage());
+        }
+
+        return $response;
     }
 }

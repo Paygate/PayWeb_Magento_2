@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *

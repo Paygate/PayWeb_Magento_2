@@ -1,4 +1,8 @@
 <?php
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
+
 /**
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -17,7 +21,7 @@ class PaymentTypes implements ArrayInterface
     /**
      * @return array
      */
-    public function toOptionArray()
+    public function toOptionArray(): array
     {
         return array(
             [

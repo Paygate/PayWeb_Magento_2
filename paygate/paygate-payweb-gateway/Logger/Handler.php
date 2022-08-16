@@ -1,4 +1,9 @@
 <?php
+/** @noinspection PhpMissingFieldTypeInspection */
+
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
 
 namespace PayGate\PayWeb\Logger;
 

@@ -1,4 +1,9 @@
 <?php
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+
+/** @noinspection PhpUnused */
+
 /**
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -20,7 +25,8 @@ class PayWebApiManagement implements PayWebApiManagementInterface
     const SUCCESS      = 1;
     const LOCAL_ERROR  = 2;
 
-    protected $payweb;
+    protected PayWeb $payweb;
+    private PayWeb $_payweb;
 
     public function __construct(
         PayWeb $payweb
@@ -31,14 +37,14 @@ class PayWebApiManagement implements PayWebApiManagementInterface
     /**
      * get test Api data.
      *
-     * @param int $id Left hand operand.
-     * @param int $quote_id Right hand operand.
+     * @param int $id Left-hand operand.
+     * @param int $quote_id Right-hand operand.
      *
-     * @return TestApiInterface
+     * @return string
      * @api
      *
      */
-    public function getApiData($id, $quote_id)
+    public function getApiData(int $id, int $quote_id): string
     {
         header('Access-Control-Allow-Origin: *');
         header('Content-type: application/json');

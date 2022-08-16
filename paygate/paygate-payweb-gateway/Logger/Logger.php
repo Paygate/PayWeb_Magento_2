@@ -1,4 +1,7 @@
 <?php
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
 
 namespace PayGate\PayWeb\Logger;
 

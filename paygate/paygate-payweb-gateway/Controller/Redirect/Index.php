@@ -1,4 +1,10 @@
 <?php
+/** @noinspection PhpMissingFieldTypeInspection */
+
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
+
 /*
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -14,6 +20,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Result\PageFactory;
 use PayGate\PayWeb\Controller\AbstractPaygate;
 use PayGate\PayWeb\Model\Config;
+use PayGate\PayWeb\Model\Paygate;
 
 /**
  * Responsible for loading page content.
@@ -27,16 +34,18 @@ class Index extends AbstractPaygate
     /**
      * @var PageFactory
      */
-    protected $resultPageFactory;
+    protected PageFactory $resultPageFactory;
     /**
      * Config method type
      *
-     * @var string
+     * @var string|Paygate
      */
-    protected $_configMethod = Config::METHOD_CODE;
+    protected Paygate|string $_configMethod = Config::METHOD_CODE;
+    protected $messageManager;
 
     /**
      * Execute
+     * @noinspection PhpUndefinedMethodInspection
      */
     public function execute()
     {
@@ -58,7 +67,7 @@ class Index extends AbstractPaygate
 
         $block = $page_object->getLayout()
                              ->getBlock('paygate')
-                             ->setPaymentFormData(isset($order) ? $order : null);
+                             ->setPaymentFormData($order ?? null);
 
         $formData = $block->getFormData();
         if ( ! $formData) {

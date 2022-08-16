@@ -1,4 +1,10 @@
 <?php
+/** @noinspection PhpUndefinedNamespaceInspection */
+
+/** @noinspection PhpUnused */
+
+/** @noinspection PhpPropertyOnlyWrittenInspection */
+
 /*
  * Copyright (c) 2022 PayGate (Pty) Ltd
  *
@@ -27,17 +33,17 @@ class Api extends AppAction
     /**
      * @var PayGate $_paymentMethod
      */
-    protected $_paymentMethod;
+    protected PayGate $_paymentMethod;
     /**
      * @var Context
      */
-    private $context;
+    private Context $context;
     private $response;
     private $redirect;
     /**
      * @var UrlInterface
      */
-    private $url;
+    private UrlInterface $url;
 
     public function __construct(
         Context $context,
@@ -57,6 +63,7 @@ class Api extends AppAction
 
     /**
      * Execute
+     * @noinspection PhpUndefinedMethodInspection
      */
     public function execute()
     {
@@ -70,8 +77,6 @@ class Api extends AppAction
         } else {
             $norouteUrl = $this->url->getUrl('noroute');
             $this->getResponse()->setRedirect($norouteUrl);
-
-            return;
         }
     }
 
