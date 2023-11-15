@@ -1,24 +1,23 @@
 {
   "name": "paygate/paygate-payweb-gateway",
-  "description": "PayGate PayWeb Payment Gateway for Magento 2",
+  "description": "Paygate PayWeb Payment Gateway for Magento 2",
   "type": "magento2-module",
+  "version": "2.5.2",
   "minimum-stability": "stable",
   "license": "GPL-3.0",
-  "authors": [
-    {
+  "authors": [{
       "name": "App Inlet (Pty) Ltd",
       "email": "info@appinlet.com"
-    }
-  ],
+  }],
   "require": {
     "php": "^8.1"
   },
   "autoload": {
     "files": [
-      "paygate/paygate-payweb-gateway/registration.php"
+      "registration.php"
     ],
     "psr-4": {
-      "PayGate\\PayWeb\\": "paygate/paygate-payweb-gateway"
+      "PayGate\\PayWeb\\": ""
     }
   }
 }

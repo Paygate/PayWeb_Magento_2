@@ -1,0 +1,24 @@
+<?php
+/*
+ * Copyright (c) 2023 Payfast (Pty) Ltd
+ *
+ * Author: App Inlet (Pty) Ltd
+ *
+ * Released under the GNU General Public License
+ */
+
+?>
+<div class="rk button">
+    <form action="<?=
+    /** @noinspection PhpUndefinedVariableInspection */
+    $block->escapeUrl($block->getGateUrl()); ?>" method="POST">
+        <?php
+        foreach ($block->getPostData() as $key => $value): ?>
+            <input type="hidden" name="<?= $block->escapeHtml($key); ?>"
+                   value="<?= $block->escapeHtml($value); ?>">
+            <?php
+
+        endforeach; ?>
+        <button type="submit">Pay</button>
+    </form>
+</div>
