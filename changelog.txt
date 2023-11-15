@@ -1,0 +1,96 @@
+=========================================================================
+Date                Version     Description
+=========================================================================
+
+2023-11-15: v2.5.2 : Tested on Magento 2.4.6.
+                     Refactor in keeping with Magento 2 PHP code standards.
+                     Update composer requirements.
+                     Add option to force Payment Type selection.
+                     Add Apple Pay, Samsung Pay and RCS Payment Types.
+                     Fix redirection issues to payment page (CSP whitelist).
+
+2022-08-15: v2.5.1 : Magento 2.4.5 and PHP 8.1 compatible.
+                     Code quality improvements and bug fixes.
+
+2022-06-30: v2.5.0 : Remove layout="1column" from frontend.
+                     BREAKING CHANGE: Add the ability to set Successful Order State
+                     in addition to Successful Order Status. Please ensure this config
+                     option is set after updating.
+
+2022-01-05: v2.4.9 : Improve store scope handling.
+                     Update Masterpass to Scan to Pay.
+
+2021-10-20: v2.4.8 : Improve fetch method to uncancel approved fetched orders.
+
+2021-10-08: v2.4.7 : Add debug logging option for fetch method.
+                     Only use real order ID in PayWeb reference field.
+
+2021-09-15: v2.4.6 : Disable PayGate on unsupported multiship.
+                     Fix undefined offset on cron query method.
+                     Improve Payment Type styling on one-step checkout.
+                     Add additional logging on fetch method.
+
+2021-08-12: v2.4.5 : Fix Swagger API issue.
+                     Add PayPal payment type.
+                     Fix DATA_CHK issue on Payment Types.
+
+2021-07-30: v2.4.4 : Consolidate Cron class into single file for Magento 2.4.x.
+                     Block double order processing on multiple requests.
+                     Add API support for PayGate payment gateway.
+                     Improve multisite scope handling for Fetch and Cron.
+                     Add support for Store Credit if available (getTotalDue).
+
+2021-07-05: v2.4.3 : Increase cron schedule to query every 10 minutes.
+
+2021-06-15: v2.4.2 : Fix cron query method not firing as expected on some configurations.
+                     Fix 'Fetch' query method not updating order status from backend.
+                     Remove redirect button.
+                     Code refactor and format.
+                     Improve IPN reliability.
+
+2021-05-14: v2.4.1 : Fix PayVault Card Delete.
+                     Transaction ID added for Pending orders after initiate.
+                     Cron schedule amended.
+                     Payment Types radio block fix for some themes.
+                     Remove object manager.
+                     Fix undefined index error $orderData['additional_information'].
+                     Order status set to pending if checksum fails to pick up by cron.
+                     Don't update order status by IPN if already complete or processing.
+
+2021-04-06: v2.4.0 : Major rewrite to add support for Magento 2.4.x
+                     Improve handling of spaces in PayGate ID.
+                     Remove legacy iFrame code.
+                     Add PayWeb Query function.
+                     Add PayVault feature.
+                     Add Payment Types feature.
+                     Use Magento Payment Transactions instead of order comments.
+2020-09-23: v2.3.4 : Fix order page redirect if successful transaction on some servers.
+2020-09-16: v2.3.3 : Fix sessions cleared in some browsers.
+2020-01-24: v2.3.2 : Improve testing validation for existing invoices.
+                     Tested with Magento 2.3.3.
+2019-12-14: v2.3.1 : Added CSRF handling in notify script.
+                     Version check for CSRF - 2.3.0+ only.
+                     Use Grand Total only in PayGate.
+                     Added changelog.
+2019-12-14: v2.3.0 : Better compatibility with Magento 2.2.x.
+                     Process order updates in IPN or redirect.
+                     Minor bug fixes.
+2019-04-30: v2.2.9 : Magento 2.3.1 compatibility.
+                     CSRF form validation.
+                     OneStepCheckout compatibility.
+2018-09-18: v2.2.8 : Fix children order cancelling issue.
+2018-09-11: v2.2.7 : Add order send and options.
+2018-08-30: v2.2.6 : Initial release.
+2018-08-23: v2.2.5 : Hide close button.
+                     Disable close modal.
+2018-06-28: v2.2.4 : Fix invoices not automatically created.
+2018-03-06: v2.2.3 : Apply rebranding.
+                     Fix redirect issue.
+2017-11-09: v2.2.2 : Setup instructions.
+                     Config bug fix.
+2017-10-29: v2.2.1 : Add system settings per store.
+                     Include ZAR as currency.
+                     Fix test mode bug.
+                     Fix errors.
+2017-10-09: v2.2.0 : Change copyright 2015 -> 2017.
+                     Initial version.
