@@ -261,44 +261,44 @@ class PaygateConfigProvider implements ConfigProviderInterface
                 'label' => $this->paymentMethod->getPaymentTypeDescription('BT'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/sid.svg'),
             ],
-            'EW-ZAPPER'    => [
-                'value' => 'EW-ZAPPER',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-ZAPPER'),
+            'EW-Zapper'    => [
+                'value' => 'EW-Zapper',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-Zapper'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/zapper.svg'),
             ],
-            'EW-SNAPSCAN'  => [
-                'value' => 'EW-SNAPSCAN',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-SNAPSCAN'),
+            'EW-SnapScan'  => [
+                'value' => 'EW-SnapScan',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-SnapScan'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/snapscan.svg'),
             ],
-            'EW-MOBICRED'  => [
-                'value' => 'EW-MOBICRED',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-MOBICRED'),
+            'EW-Mobicred'  => [
+                'value' => 'EW-Mobicred',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-Mobicred'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/mobicred.svg'),
             ],
-            'EW-MOMOPAY'   => [
-                'value' => 'EW-MOMOPAY',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-MOMOPAY'),
+            'EW-Momopay'   => [
+                'value' => 'EW-Momopay',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-Momopay'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/momopay.svg'),
             ],
-            'EW-SCANTOPAY' => [
-                'value' => 'EW-SCANTOPAY',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-SCANTOPAY'),
+            'EW-MasterPass' => [
+                'value' => 'EW-MasterPass',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-MasterPass'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/scan-to-pay.svg'),
             ],
-            'EW-PAYPAL'    => [
-                'value' => 'EW-PAYPAL',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-PAYPAL'),
+            'EW-PayPal'    => [
+                'value' => 'EW-PayPal',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-PayPal'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/paypal.svg'),
             ],
-            'EW-SAMSUNGPAY'    => [
-                'value' => 'EW-SAMSUNGPAY',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-SAMSUNGPAY'),
+            'EW-Samsungpay'    => [
+                'value' => 'EW-Samsungpay',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-Samsungpay'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/samsung-pay.svg'),
             ],
-            'CC-APPLEPAY'    => [
-                'value' => 'CC-APPLEPAY',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('CC-APPLEPAY'),
+            'CC-Applepay'    => [
+                'value' => 'CC-Applepay',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('CC-Applepay'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/apple-pay.svg'),
             ],
             'EW-RCS'    => [

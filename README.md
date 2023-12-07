@@ -1,5 +1,5 @@
 # PayWeb_Magento_2
-## PayGate Magento plugin v2.5.2 for Magento v2.4.6
+## PayGate Magento plugin v2.5.3 for Magento v2.4.6
 
 This is the Paygate PayWeb3 plugin for Magento 2. Please feel free to contact the Payfast support team at support@payfast.help should you require any assistance.
 
@@ -12,7 +12,7 @@ You can install this module using composer:
 composer require paygate/paygate-payweb-gateway
 ```
 
-Alternatively, please navigate to the [releases page](https://github.com/PayGate/PayWeb_Magento_2/releases), download the latest release (v2.5.2) and unzip. You will then be able to follow the integration guide PDF which is included in the zip.
+Alternatively, please navigate to the [releases page](https://github.com/PayGate/PayWeb_Magento_2/releases), download the latest release (v2.5.3) and unzip. You will then be able to follow the integration guide PDF which is included in the zip.
 
 ## Collaboration
 
