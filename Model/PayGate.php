@@ -98,14 +98,14 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
     public const SCANTOPAY                   = 'pw3_e_scantopay';
     public const CREDIT_CARD_METHOD          = 'CC';
     public const BANK_TRANSFER_METHOD        = 'BT';
-    public const ZAPPER_METHOD               = 'EW-ZAPPER';
-    public const SNAPSCAN_METHOD             = 'EW-SNAPSCAN';
-    public const MOBICRED_METHOD             = 'EW-MOBICRED';
-    public const MOMOPAY_METHOD              = 'EW-MOMOPAY';
-    public const SCANTOPAY_METHOD            = 'EW-SCANTOPAY';
-    public const PAYPAL_METHOD               = 'EW-PAYPAL';
-    public const SAMSUNG_METHOD              = 'EW-SAMSUNGPAY';
-    public const APPLE_METHOD                = 'CC-APPLEPAY';
+    public const ZAPPER_METHOD               = 'EW-Zapper';
+    public const SNAPSCAN_METHOD             = 'EW-SnapScan';
+    public const MOBICRED_METHOD             = 'EW-Mobicred';
+    public const MOMOPAY_METHOD              = 'EW-Momopay';
+    public const SCANTOPAY_METHOD            = 'EW-MasterPass';
+    public const PAYPAL_METHOD               = 'EW-PayPal';
+    public const SAMSUNG_METHOD              = 'EW-Samsungpay';
+    public const APPLE_METHOD                = 'CC-Applepay';
     public const RCS_METHOD                  = 'EW-RCS';
     public const CREDIT_CARD_DESCRIPTION     = 'Card';
     public const BANK_TRANSFER_DESCRIPTION   = 'SiD Secure EFT';
@@ -119,7 +119,9 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
     public const SCANTOPAY_DESCRIPTION_LABEL = 'ScanToPay';
     public const PAYPAL_DESCRIPTION          = 'PayPal';
     public const SAMSUNG_DESCRIPTION         = 'Samsung Pay';
+    public const SAMSUNG_DESCRIPTION_DETAIL  = 'Samsungpay';
     public const APPLE_DESCRIPTION           = 'ApplePay';
+    public const APPLE_DESCRIPTION_DETAIL    = 'Applepay';
     public const RCS_DESCRIPTION             = 'RCS';
     public const SECURE                      = '_secure';
     /**
@@ -634,7 +636,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
             'paygate/notify',
             ['_secure' => true]
         ) . '?eid=' . $entityOrderId;
-        $fields['USER3']      = 'magento2-v2.5.2';
+        $fields['USER3']      = 'magento2-v2.5.3';
 
         return $fields;
     }
@@ -655,8 +657,8 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
             self::MOMOPAY_METHOD => static::MOMOPAY_METHOD_DETAIL,
             self::SCANTOPAY_METHOD => static::SCANTOPAY_DESCRIPTION,
             self::PAYPAL_METHOD => static::PAYPAL_DESCRIPTION,
-            self::SAMSUNG_METHOD => static::SAMSUNG_DESCRIPTION,
-            self::APPLE_METHOD => static::APPLE_DESCRIPTION,
+            self::SAMSUNG_METHOD => static::SAMSUNG_DESCRIPTION_DETAIL,
+            self::APPLE_METHOD => static::APPLE_DESCRIPTION_DETAIL,
             self::RCS_METHOD => static::RCS_DESCRIPTION,
             default => static::CREDIT_CARD_DESCRIPTION,
         };

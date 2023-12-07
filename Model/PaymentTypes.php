@@ -51,36 +51,36 @@ class PaymentTypes implements ArrayInterface
                 'label' => $this->paymentMethod->getPaymentTypeDescription('BT'),
             ],
             [
-                'value' => 'EW-ZAPPER',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-ZAPPER'),
+                'value' => 'EW-Zapper',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-Zapper'),
             ],
             [
-                'value' => 'EW-SNAPSCAN',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-SNAPSCAN'),
+                'value' => 'EW-SnapScan',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-SnapScan'),
             ],
             [
-                'value' => 'EW-MOBICRED',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-MOBICRED'),
+                'value' => 'EW-Mobicred',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-Mobicred'),
             ],
             [
-                'value' => 'EW-MOMOPAY',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-MOMOPAY'),
+                'value' => 'EW-Momopay',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-Momopay'),
             ],
             [
-                'value' => 'EW-SCANTOPAY',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-SCANTOPAY'),
+                'value' => 'EW-MasterPass',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-MasterPass'),
             ],
             [
-                'value' => 'EW-PAYPAL',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-PAYPAL'),
+                'value' => 'EW-PayPal',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-PayPal'),
             ],
             [
-                'value' => 'EW-SAMSUNGPAY',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-SAMSUNGPAY'),
+                'value' => 'EW-Samsungpay',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-Samsungpay'),
             ],
             [
-                'value' => 'CC-APPLEPAY',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('CC-APPLEPAY'),
+                'value' => 'CC-Applepay',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('CC-Applepay'),
             ],
             [
                 'value' => 'EW-RCS',

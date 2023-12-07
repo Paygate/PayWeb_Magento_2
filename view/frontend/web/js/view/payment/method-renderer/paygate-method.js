@@ -148,7 +148,7 @@ define(
                     }
                 },
                 getCode: function () {
-                    let applePayOption = $('input[value=CC-APPLEPAY]');
+                    let applePayOption = $('input[value=CC-Applepay]');
                     if (applePayOption.length != 0 && typeof window.ApplePaySession == 'undefined') {
                         applePayOption.parent().remove()
                     }
