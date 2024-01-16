@@ -25,7 +25,7 @@
  */
 
 /**
- * Copyright (c) 2023 Payfast (Pty) Ltd
+ * Copyright (c) 2024 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -636,7 +636,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
             'paygate/notify',
             ['_secure' => true]
         ) . '?eid=' . $entityOrderId;
-        $fields['USER3']      = 'magento2-v2.5.3';
+        $fields['USER3']      = 'magento2-v2.5.4';
 
         return $fields;
     }

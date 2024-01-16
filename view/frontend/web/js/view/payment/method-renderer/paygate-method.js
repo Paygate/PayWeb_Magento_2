@@ -1,7 +1,7 @@
 // noinspection UnnecessaryLocalVariableJS,JSCheckFunctionSignatures,JSUnresolvedFunction,JSUnresolvedVariable,EqualityComparisonWithCoercionJS,JSUnusedGlobalSymbols,JSUnusedLocalSymbols
 
 /*
- * Copyright (c) 2023 Payfast (Pty) Ltd
+ * Copyright (c) 2024 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *

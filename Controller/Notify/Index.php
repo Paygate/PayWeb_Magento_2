@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (c) 2023 Payfast (Pty) Ltd
+ * Copyright (c) 2024 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -53,10 +53,6 @@ class Index extends AbstractPaygate
      * @var Transaction
      */
     private Transaction $transactionModel;
-    /**
-     * @var ResponseInterface
-     */
-    private ResponseInterface $responseInterface;
 
     /**
      * @param PageFactory $pageFactory
@@ -110,10 +106,9 @@ class Index extends AbstractPaygate
         Request $request,
         ManagerInterface $messageManager,
         ResultFactory $resultFactory,
-        ResponseInterface $responseInterface
     ) {
         $this->transactionModel = $transactionModel;
-        $this->responseInterface = $responseInterface;
+        $this->resultFactory = $resultFactory;
         parent::__construct(
             $pageFactory,
             $customerSession,
@@ -234,7 +229,13 @@ class Index extends AbstractPaygate
         }
         $this->_logger->debug($pre . 'eof');
 
-        return $this->responseInterface->sendResponse();
+        $resultRaw = $this->resultFactory->create(ResultFactory::TYPE_RAW);
+
+        $resultRaw->setHttpResponseCode(200);
+
+        $resultRaw->setContents('OK');
+
+        return $resultRaw;
     }
 
     /**
