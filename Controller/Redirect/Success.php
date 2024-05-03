@@ -55,6 +55,8 @@ use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 use Magento\Sales\Model\Service\InvoiceService;
 use Magento\Store\Model\StoreManagerInterface;
 use PayGate\PayWeb\Controller\AbstractPaygate;
+use PayGate\PayWeb\Model\Config as PayGateConfig;
+use PayGate\PayWeb\Model\ConfigFactory;
 use PayGate\PayWeb\Model\PayGate;
 use Psr\Log\LoggerInterface;
 use Magento\Sales\Api\Data\OrderInterface;
@@ -63,6 +65,7 @@ use Magento\Checkout\Controller\Express\RedirectLoginInterface;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\App\ObjectManager;
+use PayGate\PayWeb\Model\Config;
 
 /**
  * Responsible for loading page content.
@@ -121,6 +124,14 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
      * @var CustomerRepositoryInterface
      */
     private CustomerRepositoryInterface $customerRepository;
+    /**
+     * @var ConfigFactory|PayGateConfig
+     */
+    private ConfigFactory|PayGateConfig $_paygateconfig;
+    /**
+     * @var string
+     */
+    private string $enableLogging;
 
     /**
      * @param PageFactory $pageFactory
@@ -152,6 +163,7 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
      * @param ManagerInterface $messageManager
      * @param ResultFactory $resultFactory
      * @param CustomerRepositoryInterface $customerRepository
+     * @param PayGateConfig $paygateconfig
      */
     public function __construct(
         PageFactory $pageFactory,
@@ -182,7 +194,8 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
         Request $request,
         ManagerInterface $messageManager,
         ResultFactory $resultFactory,
-        CustomerRepositoryInterface $customerRepository
+        CustomerRepositoryInterface $customerRepository,
+        PayGateConfig $paygateconfig
     ) {
         $this->orderModel           = $orderModel;
         $this->scopeConfigInterface = $scopeConfigInterface;
@@ -193,6 +206,8 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
         $this->customerUrl          = $customerUrl;
         $this->customerSession      = $customerSession;
         $this->customerRepository   = $customerRepository;
+        $this->_paygateconfig = $paygateconfig;
+        $this->enableLogging = $this->_paygateconfig->getEnableLogging();
 
         parent::__construct(
             $pageFactory,
@@ -289,6 +304,11 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
 
                 $validateChecksum = hash_equals($checksum, $test_checksum);
 
+                if ($this->enableLogging === '1') {
+                    $this->_logger->info('Reference @ Success.php: ' . json_encode($reference));
+                    $this->_logger->info('Checksum @ Success.php: ' . json_encode($checksum));
+                }
+
                 if (!empty($status) && $validateChecksum && $this->processOrder($order, $status, $data)) {
                     $resultRedirect = $resultRedirectFactory->setPath($successPath);
                 } else {
@@ -371,6 +391,9 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
                     // Save Transaction Response
                     $this->createTransaction($order, $data);
                     $order->setState($state)->setStatus($status)->save();
+                    if ($this->enableLogging === '1') {
+                        $this->_logger->info('Order #' . $order->getId() . ' Saved @ Success.php');
+                    }
                 }
 
                 $success = true;
@@ -383,6 +406,9 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
                     $order->setPaywebPaymentProcessed(1)->save();
                     $this->createTransaction($order, $data);
                     $order->cancel()->save();
+                    if ($this->enableLogging === '1') {
+                        $this->_logger->info('Order #' . $order->getId() . ' Declined @ Success.php');
+                    }
                 }
                 break;
             default:
@@ -392,6 +418,9 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
                     $order->setPaywebPaymentProcessed(1)->save();
                     $this->createTransaction($order, $data);
                     $order->cancel()->save();
+                    if ($this->enableLogging === '1') {
+                        $this->_logger->info('Order #' . $order->getId() . ' Cancelled @ Success.php');
+                    }
                 }
                 break;
         }

@@ -83,8 +83,8 @@ class PaymentTypes implements ArrayInterface
                 'label' => $this->paymentMethod->getPaymentTypeDescription('CC-Applepay'),
             ],
             [
-                'value' => 'EW-RCS',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-RCS'),
+                'value' => 'CC-RCS',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('CC-RCS'),
             ]
         ];
     }

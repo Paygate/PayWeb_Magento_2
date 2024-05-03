@@ -40,7 +40,6 @@ use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder;
 use Magento\Sales\Model\Service\InvoiceService;
 use Magento\Store\Model\Store;
-use PayGate\PayWeb\Logger\Logger;
 use PayGate\PayWeb\Model\Config as PayGateConfig;
 use PayGate\PayWeb\Model\ConfigFactory;
 use Psr\Log\LoggerInterface;
@@ -91,12 +90,6 @@ class Data extends AbstractHelper
      */
     protected DBTransaction $dbTransaction;
     /**
-     * Logging instance
-     *
-     * @var Logger
-     */
-    protected Logger $_paygatelogger;
-    /**
      * @var array
      */
     private array $methodCodes;
@@ -124,7 +117,6 @@ class Data extends AbstractHelper
      * @param DBTransaction $dbTransaction
      * @param InvoiceService $invoiceService
      * @param InvoiceSender $invoiceSender
-     * @param Logger $logger
      * @param array $methodCodes
      * @param Curl $curl
      */
@@ -139,12 +131,10 @@ class Data extends AbstractHelper
         DBTransaction $dbTransaction,
         InvoiceService $invoiceService,
         InvoiceSender $invoiceSender,
-        Logger $logger,
         array $methodCodes,
         Curl $curl
     ) {
         $this->_logger        = $context->getLogger();
-        $this->_paygatelogger = $logger;
 
         $pre = __METHOD__ . " : ";
         $this->_logger->debug($pre . 'bof, methodCodes is : ', $methodCodes);
@@ -254,9 +244,8 @@ class Data extends AbstractHelper
         $result = $this->curl->getBody();
 
         if ($enableLogging) {
-            $this->_paygatelogger->info("Encryption Key => " . $encryptionKey);
-            $this->_paygatelogger->info(json_encode($data));
-            $this->_paygatelogger->info(json_encode($result));
+            $this->_logger->info('Fetch Transaction Data: ' . json_encode($data));
+            $this->_logger->info('Fetch Transaction Result: ' . json_encode($result));
         }
 
         return $result;
