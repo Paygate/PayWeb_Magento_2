@@ -2,6 +2,10 @@
 Date                Version     Description
 =========================================================================
 
+2024-05-03: v2.5.5 : Mask Paygate encryption key.
+                     Improve debug logging.
+                     Fix RCS payment type support.
+
 2024-01-16: v2.5.4 : Return accepted Magento return object for the notify controller.
 
 2023-12-07: v2.5.3 : Fix issues with Apple Pay payment type not selecting as expected.

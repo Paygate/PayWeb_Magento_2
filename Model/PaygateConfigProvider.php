@@ -301,9 +301,9 @@ class PaygateConfigProvider implements ConfigProviderInterface
                 'label' => $this->paymentMethod->getPaymentTypeDescription('CC-Applepay'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/apple-pay.svg'),
             ],
-            'EW-RCS'    => [
-                'value' => 'EW-RCS',
-                'label' => $this->paymentMethod->getPaymentTypeDescription('EW-RCS'),
+            'CC-RCS'    => [
+                'value' => 'CC-RCS',
+                'label' => $this->paymentMethod->getPaymentTypeDescription('CC-RCS'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/rcs.svg'),
             ]
         ];

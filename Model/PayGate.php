@@ -106,7 +106,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
     public const PAYPAL_METHOD               = 'EW-PayPal';
     public const SAMSUNG_METHOD              = 'EW-Samsungpay';
     public const APPLE_METHOD                = 'CC-Applepay';
-    public const RCS_METHOD                  = 'EW-RCS';
+    public const RCS_METHOD                  = 'CC-RCS';
     public const CREDIT_CARD_DESCRIPTION     = 'Card';
     public const BANK_TRANSFER_DESCRIPTION   = 'SiD Secure EFT';
     public const BANK_TRANSFER_METHOD_DETAIL = 'SID';
@@ -525,6 +525,8 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
 
         $fields = $this->prepareFields($order);
 
+        $this->_logger->debug($pre . 'Paygate order fields : ' . json_encode($fields));
+
         if (! empty($vaultId) && ($vaultEnabled == 1 || ($vaultEnabled == $saveCard)) && ($vaultEnabled !== 0)) {
             $fields['VAULT']    = 1;
             $fields['VAULT_ID'] = $vaultId;
@@ -636,7 +638,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
             'paygate/notify',
             ['_secure' => true]
         ) . '?eid=' . $entityOrderId;
-        $fields['USER3']      = 'magento2-v2.5.4';
+        $fields['USER3']      = 'magento2-v2.5.5';
 
         return $fields;
     }
@@ -699,7 +701,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
             self::BANK_TRANSFER => self::BANK_TRANSFER,
             self::ZAPPER_METHOD, self::PAYPAL_METHOD, self::SCANTOPAY_METHOD,
             self::MOMOPAY_METHOD, self::MOBICRED_METHOD,
-            self::SAMSUNG_METHOD, self::RCS_METHOD, self::SNAPSCAN_METHOD, => 'EW',
+            self::SAMSUNG_METHOD, self::SNAPSCAN_METHOD, => 'EW',
             default => 'CC',
         };
     }

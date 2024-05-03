@@ -22,6 +22,7 @@ namespace PayGate\PayWeb\Model;
 use JetBrains\PhpStorm\Pure;
 use Magento\Directory\Helper\Data;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\UrlInterface;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Model\Method\AbstractMethod;
@@ -83,13 +84,18 @@ class Config extends AbstractConfig
      */
     protected ScopeConfigInterface $scopeConfig;
     private $_supportedImageLocales;
+    /**
+     * @var EncryptorInterface
+     */
+    protected $encryptor;
 
     public function __construct(
         ScopeConfigInterface $scopeConfig,
         Data $directoryHelper,
         StoreManagerInterface $storeManager,
         LoggerInterface $logger,
-        Repository $assetRepo
+        Repository $assetRepo,
+        EncryptorInterface $encryptor
     ) {
         $this->_logger = $logger;
         parent::__construct($scopeConfig);
@@ -97,6 +103,7 @@ class Config extends AbstractConfig
         $this->_storeManager   = $storeManager;
         $this->_assetRepo      = $assetRepo;
         $this->scopeConfig     = $scopeConfig;
+        $this->encryptor       = $encryptor;
 
         $this->setMethod('paygate');
         $currentStoreId = $this->_storeManager->getStore()->getStoreId();
@@ -327,7 +334,7 @@ class Config extends AbstractConfig
         if ($store_id) {
             $encryptionKey = $this->getConfig('encryption_key', $store_id);
         }
-
+        $encryptionKey = $this->encryptor->decrypt($encryptionKey);
         if ($this->isTestMode()) {
             $encryptionKey = 'secret';
         }

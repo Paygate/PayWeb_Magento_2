@@ -22,6 +22,7 @@ use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Customer\Model\Url;
 use Magento\Framework\DB\Transaction;
 use Magento\Framework\DB\TransactionFactory;
+use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Framework\Session\Generic;
@@ -41,6 +42,8 @@ use Magento\Sales\Model\Service\InvoiceService;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Store\Model\StoreManagerInterface;
 use PayGate\PayWeb\Controller\AbstractPaygate;
+use PayGate\PayWeb\Model\Config as PayGateConfig;
+use PayGate\PayWeb\Model\ConfigFactory;
 use PayGate\PayWeb\Model\PayGate;
 use Psr\Log\LoggerInterface;
 use Magento\Framework\Webapi\Rest\Request;
@@ -53,6 +56,18 @@ class Index extends AbstractPaygate
      * @var Transaction
      */
     private Transaction $transactionModel;
+    /**
+     * @var ConfigFactory|PayGateConfig
+     */
+    private ConfigFactory|PayGateConfig $_paygateconfig;
+    /**
+     * @var string
+     */
+    private string $enableLogging;
+    /**
+     * @var EncryptorInterface
+     */
+    protected $encryptor;
 
     /**
      * @param PageFactory $pageFactory
@@ -80,6 +95,8 @@ class Index extends AbstractPaygate
      * @param ManagerInterface $messageManager
      * @param ResultFactory $resultFactory
      * @param ResponseInterface $responseInterface
+     * @param PayGateConfig $paygateconfig
+     * @param EncryptorInterface $encryptor
      */
     public function __construct(
         PageFactory $pageFactory,
@@ -106,9 +123,15 @@ class Index extends AbstractPaygate
         Request $request,
         ManagerInterface $messageManager,
         ResultFactory $resultFactory,
+        PayGateConfig $paygateconfig,
+        EncryptorInterface $encryptor
     ) {
         $this->transactionModel = $transactionModel;
         $this->resultFactory = $resultFactory;
+        $this->_paygateconfig = $paygateconfig;
+        $this->enableLogging = $this->_paygateconfig->getEnableLogging();
+        $this->encryptor = $encryptor;
+
         parent::__construct(
             $pageFactory,
             $customerSession,
@@ -132,7 +155,8 @@ class Index extends AbstractPaygate
             $objectManager,
             $request,
             $messageManager,
-            $resultFactory
+            $resultFactory,
+            $encryptor
         );
     }
 
@@ -151,6 +175,7 @@ class Index extends AbstractPaygate
         $notify_data = [];
         // Get notify data
         $paygate_data = $this->getPostData();
+
         if ($paygate_data === false) {
             $errors = true;
         }
@@ -188,10 +213,16 @@ class Index extends AbstractPaygate
                     $errors = true;
                 }
             }
+
+            if ($this->enableLogging === '1') {
+                $this->_logger->info('Reference @ Notify.php: ' . json_encode($notify_data['REFERENCE']));
+                $this->_logger->info('Checksum @ Notify.php: ' . json_encode($notify_data['CHECKSUM']));
+            }
+
             if ($this->getConfigData('test_mode') != '0') {
                 $encryption_key = 'secret';
             } else {
-                $encryption_key = $this->getConfigData('encryption_key');
+                $encryption_key = $this->encryptor->decrypt($this->getConfigData('encryption_key'));
             }
             $checkSumParams .= $encryption_key;
         }
@@ -250,6 +281,7 @@ class Index extends AbstractPaygate
     public function processOrder(Order $order, int $status, array $paygate_data): bool
     {
         $success = false;
+
         switch ($status) {
             case 1:
                 $orderState = $order->getState();
@@ -299,6 +331,11 @@ class Index extends AbstractPaygate
                     // Save Transaction Response
                     $this->createTransaction($order, $paygate_data);
                     $order->setState($state)->setStatus($status)->save();
+
+                    if ($this->enableLogging === '1') {
+                        $this->_logger->info('Order #' . $order->getId() . ' Saved @ Notify.php');
+                    }
+
                     $success = true;
                 }
 
