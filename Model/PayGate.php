@@ -638,7 +638,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
             'paygate/notify',
             ['_secure' => true]
         ) . '?eid=' . $entityOrderId;
-        $fields['USER3']      = 'magento2-v2.5.5';
+        $fields['USER3']      = 'magento2-v2.5.6';
 
         return $fields;
     }
