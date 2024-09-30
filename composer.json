@@ -2,7 +2,7 @@
   "name": "paygate/paygate-payweb-gateway",
   "description": "Paygate PayWeb Payment Gateway for Magento 2",
   "type": "magento2-module",
-  "version": "2.5.5",
+  "version": "2.5.6",
   "minimum-stability": "stable",
   "license": "GPL-3.0",
   "authors": [{

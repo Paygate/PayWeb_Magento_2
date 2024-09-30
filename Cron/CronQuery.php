@@ -126,12 +126,12 @@ class CronQuery
                 $this->_logger->info('Cutoff: ' . $cutoffTime);
                 $ocf = $this->_orderCollectionFactory->create();
                 $ocf->addAttributeToSelect('entity_id');
-                $ocf->addAttributeToFilter('status', ['eq' => 'pending_payment']);
+                $ocf->addAttributeToFilter('state', ['eq' => 'pending_payment']);
                 $ocf->addAttributeToFilter('created_at', ['lt' => $cutoffTime]);
                 $ocf->addAttributeToFilter('updated_at', ['lt' => $cutoffTime]);
                 $orderIds = $ocf->getData();
 
-                $this->_logger->info('Orders for cron: ' . json_encode($orderIds));
+                $this->_logger->info('Pending orders found: ' . json_encode($orderIds));
 
                 foreach ($orderIds as $orderId) {
                     $order_id                = $orderId['entity_id'];
@@ -155,7 +155,8 @@ class CronQuery
                         }
                     }
 
-                    if (! empty($transactionId) & $PaymentTitle == "PAYGATE_PAYWEB") {
+                    if (! empty($transactionId) && $PaymentTitle === "PAYGATE_PAYWEB") {
+                        $this->_logger->info('Processing order #' . $orderId['entity_id']);
                         $orderquery['orderId']        = $order->getRealOrderId();
                         $orderquery['country']        = $order->getBillingAddress()->getCountryId();
                         $orderquery['currency']       = $order->getOrderCurrencyCode();
