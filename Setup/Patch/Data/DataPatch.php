@@ -24,7 +24,7 @@ class DataPatch implements DataPatchInterface
     public function __construct(ModuleDataSetupInterface $moduleDataSetup, SalesSetup $salesSetup)
     {
         $this->moduleDataSetup = $moduleDataSetup;
-        $this->salesSetup = $salesSetup;
+        $this->salesSetup      = $salesSetup;
     }
 
     /**

@@ -1,7 +1,4 @@
 <?php
-/**
- * @noinspection PhpUndefinedNamespaceInspection
- */
 
 /**
  * @noinspection PhpUnused
@@ -50,14 +47,14 @@ class PayWebApiManagement implements PayWebApiManagementInterface
         PayWeb $payweb,
         JsonFactory $jsonFactory
     ) {
-        $this->_payweb            = $payweb;
-        $this->jsonFactory        = $jsonFactory;
+        $this->_payweb     = $payweb;
+        $this->jsonFactory = $jsonFactory;
     }
 
     /**
      * Get test Api data.
      *
-     * @param int $id       Left-hand operand.
+     * @param int $id Left-hand operand.
      * @param int $quote_id Right-hand operand.
      *
      * @return Json
@@ -78,11 +75,13 @@ class PayWebApiManagement implements PayWebApiManagementInterface
             }
 
             $jsonResult->setData(json_encode($returnArray));
+
             return $jsonResult;
         } catch (LocalizedException $e) {
             $returnArray['error']  = $e->getMessage();
             $returnArray['status'] = 0;
             $jsonResult->setData(json_encode($returnArray));
+
             return $jsonResult;
         }
     }

@@ -1,7 +1,4 @@
 <?php
-/**
- * @noinspection PhpUndefinedNamespaceInspection
- */
 
 /**
  * @noinspection PhpUnused
@@ -17,9 +14,9 @@
 
 namespace PayGate\PayWeb\Model;
 
-use Magento\Framework\Option\ArrayInterface;
+use Magento\Framework\Data\OptionSourceInterface;
 
-class PaymentTypes implements ArrayInterface
+class PaymentTypes implements OptionSourceInterface
 {
     /**
      * @var \PayGate\PayWeb\Model\PayGate

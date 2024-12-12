@@ -17,10 +17,6 @@
  */
 
 /**
- * @noinspection PhpUndefinedNamespaceInspection
- */
-
-/**
  * @noinspection PhpUnused
  */
 
@@ -72,16 +68,16 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Vault\Api\Data\PaymentTokenInterface;
 use Magento\Vault\Api\PaymentTokenManagementInterface;
 use Magento\Vault\Api\PaymentTokenRepositoryInterface;
-use Magento\Vault\Model\CreditCardTokenFactory;
+use Magento\Vault\Api\Data\PaymentTokenFactoryInterface;
 use Magento\Vault\Model\ResourceModel\PaymentToken as PaymentTokenResourceModel;
 use PayGate\PayWeb\Helper\Data;
 use Psr\Log\LoggerInterface;
 use PayGate\PayWeb\Block\Payment\Info;
 use PayGate\PayWeb\Block\Form;
-use Magento\Framework\HTTP\Client\Curl;
 use Magento\Framework\Model\AbstractExtensibleModel;
 use Magento\Framework\Event\ManagerInterface;
 use Laminas\Uri\Uri;
+use GuzzleHttp\Client;
 
 /**
  * @SuppressWarnings(PHPMD.TooManyFields)
@@ -247,9 +243,9 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      */
     protected $transactionBuilder;
     /**
-     * @var CreditCardTokenFactory
+     * @var PaymentTokenFactoryInterface
      */
-    protected $creditCardTokenFactory;
+    protected $paymentTokenFactory;
     /**
      * @var PaymentTokenRepositoryInterface
      */
@@ -299,9 +295,9 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      */
     protected CustomerSession $customerSession;
     /**
-     * @var Curl
+     * @var Client
      */
-    private Curl $curl;
+    protected Client $httpClient;
 
     /**
      * @param ConfigFactory $configFactory
@@ -312,7 +308,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * @param LocalizedExceptionFactory $exception
      * @param TransactionRepositoryInterface $transactionRepository
      * @param BuilderInterface $transactionBuilder
-     * @param CreditCardTokenFactory $CreditCardTokenFactory
+     * @param PaymentTokenFactoryInterface $paymentTokenFactory
      * @param PaymentTokenRepositoryInterface $PaymentTokenRepositoryInterface
      * @param PaymentTokenManagementInterface $paymentTokenManagement
      * @param EncryptorInterface $encryptor
@@ -321,11 +317,11 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * @param PaymentTokenManagementInterface $paymentTokenManagementInterface
      * @param Data $PaygateHelper
      * @param OrderRepositoryInterface $orderRepository
-     * @param Curl $curl
      * @param ScopeConfigInterface $_scopeConfig
      * @param ManagerInterface $_eventManager
      * @param LoggerInterface $_logger
      * @param Uri $uriHandler
+     * @param Client $httpClient
      * @param array $data
      */
     public function __construct(
@@ -337,7 +333,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
         LocalizedExceptionFactory $exception,
         TransactionRepositoryInterface $transactionRepository,
         BuilderInterface $transactionBuilder,
-        CreditCardTokenFactory $CreditCardTokenFactory,
+        PaymentTokenFactoryInterface $paymentTokenFactory,
         PaymentTokenRepositoryInterface $PaymentTokenRepositoryInterface,
         PaymentTokenManagementInterface $paymentTokenManagement,
         EncryptorInterface $encryptor,
@@ -346,11 +342,11 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
         PaymentTokenManagementInterface $paymentTokenManagementInterface,
         Data $PaygateHelper,
         OrderRepositoryInterface $orderRepository,
-        Curl $curl,
         ScopeConfigInterface $_scopeConfig,
         ManagerInterface $_eventManager,
         LoggerInterface $_logger,
         Uri $uriHandler,
+        Client $httpClient,
         array $data = []
     ) {
         $this->_storeManager                   = $storeManager;
@@ -360,7 +356,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
         $this->_exception                      = $exception;
         $this->transactionRepository           = $transactionRepository;
         $this->transactionBuilder              = $transactionBuilder;
-        $this->creditCardTokenFactory          = $CreditCardTokenFactory;
+        $this->paymentTokenFactory             = $paymentTokenFactory;
         $this->paymentTokenRepository          = $PaymentTokenRepositoryInterface;
         $this->paymentTokenManagement          = $paymentTokenManagement;
         $this->customerSession                 = $customerSession;
@@ -373,6 +369,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
         $this->_eventManager                   = $_eventManager;
         $this->_logger                         = $_logger;
         $this->uriHandler                      = $uriHandler;
+        $this->httpClient                      = $httpClient;
 
         $parameters = ['params' => [$this->_code]];
 
@@ -387,8 +384,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
             self::PAYPAL_METHOD        => static::PAYPAL_DESCRIPTION,
         ];
 
-        $this->_config                         = $configFactory->create($parameters);
-        $this->curl                            = $curl;
+        $this->_config = $configFactory->create($parameters);
         $this->initializeData($data);
     }
 
@@ -396,6 +392,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * Initializes injected data
      *
      * @param array $data
+     *
      * @return void
      */
     protected function initializeData($data = [])
@@ -499,22 +496,21 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
         $order           = $this->_checkoutSession->getLastRealOrder();
         $customerSession = $this->customerSession;
         $encryptionKey   = $this->_config->getEncryptionKey();
-        if (! $order || $order->getPayment() == null) {
+        if (!$order || $order->getPayment() == null) {
             return ["error" => "invalid order"];
         }
         $orderData = $order->getPayment()->getData();
 
-        $saveCard     = "new-save";
-        $dontsaveCard = "new";
         $vaultId      = "";
-        $vaultEnabled = 0;
+        $vaultEnabled = false;
         if ($customerSession->isLoggedIn() && isset($orderData['additional_information']['paygate-payvault-method'])) {
-            $vaultEnabled = $orderData['additional_information']['paygate-payvault-method'];
+            $vaultEnabled   = true;
+            $payVaultMethod = $orderData['additional_information']['paygate-payvault-method'];
 
             $vaultoptions = ['0', '1', 'new-save', 'new'];
-            if (! in_array($vaultEnabled, $vaultoptions)) {
+            if (!in_array($payVaultMethod, $vaultoptions)) {
                 $customerId = $customerSession->getCustomer()->getId();
-                $cardData   = $this->paymentTokenManagementInterface->getByPublicHash($vaultEnabled, $customerId);
+                $cardData   = $this->paymentTokenManagementInterface->getByPublicHash($payVaultMethod, $customerId);
                 if ($cardData->getEntityId()) {
                     $vaultId = $cardData->getGatewayToken();
                 }
@@ -527,24 +523,18 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
 
         $this->_logger->debug($pre . 'Paygate order fields : ' . json_encode($fields));
 
-        if (! empty($vaultId) && ($vaultEnabled == 1 || ($vaultEnabled == $saveCard)) && ($vaultEnabled !== 0)) {
+        if (!empty($vaultId)) {
             $fields['VAULT']    = 1;
             $fields['VAULT_ID'] = $vaultId;
-        } elseif ($vaultEnabled === 0 || ($vaultEnabled == $dontsaveCard)) {
-            unset($fields['VAULT']);
-            unset($fields['VAULT_ID']);
-        } elseif ($vaultEnabled == 1 && empty($vaultId)) {
+        } elseif ($vaultEnabled) {
             $fields['VAULT'] = 1;
-        } elseif (! empty($vaultId)) {
-            $fields['VAULT']    = 1;
-            $fields['VAULT_ID'] = $vaultId;
         }
 
         //@codingStandardsIgnoreStart
         $fields['CHECKSUM'] = md5(implode('', $fields) . $encryptionKey);
         //@codingStandardsIgnoreEnd
 
-        $response = $this->curlPost('https://secure.paygate.co.za/payweb3/initiate.trans', $fields);
+        $response = $this->guzzlePost('https://secure.paygate.co.za/payweb3/initiate.trans', $fields);
 
         $this->uriHandler->setQuery($response);
 
@@ -552,13 +542,14 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
 
         if (isset($result['ERROR'])) {
             $this->_checkoutSession->restoreQuote();
+
             return ["error" => $result['ERROR']];
         } else {
-            $processData             = [];
-            $result['PAYMENT_TITLE'] = "PAYGATE_PAYWEB";
+            $processData                   = [];
+            $result['PAYMENT_TITLE']       = "PAYGATE_PAYWEB";
             $result["PAYMENT_METHOD_TYPE"] = $fields["PAY_METHOD"] ?? "";
             $this->_PaygateHelper->createTransaction($order, $result);
-            if (! str_contains($response, "ERROR")) {
+            if (!str_contains($response, "ERROR")) {
                 $processData = [
                     'PAY_REQUEST_ID' => $result['PAY_REQUEST_ID'],
                     'CHECKSUM'       => $result['CHECKSUM'],
@@ -576,16 +567,18 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      *
      * @param Order $order
      * @param string $api
+     *
      * @return array
      * @throws LocalizedException
      */
     public function prepareFields($order, $api = null): array
     {
-        $billing   = $order->getBillingAddress();
-        $formKey   = $this->_formKey->getFormKey();
-        $reference = $order->getRealOrderId();
+        $billing = $order->getBillingAddress();
+        $formKey = $this->_formKey->getFormKey();
 
-        $entityOrderId = $order->getId();
+        $orderID = $order->getId();
+
+        $reference = $order->getRealOrderId();
 
         $country_code2 = $billing->getCountryId();
         $country_code3 = '';
@@ -601,7 +594,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
         $DateTime  = new DateTime();
         $paygateId = $this->_config->getPaygateId();
 
-        if (! empty($order->getTotalDue())) {
+        if (!empty($order->getTotalDue())) {
             $price = number_format($order->getTotalDue(), 2, '', '');
         } else {
             $price = number_format($this->getTotalAmount($order), 2, '', '');
@@ -616,13 +609,13 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
 
         $fields = [
             'PAYGATE_ID'       => $paygateId,
-            'REFERENCE'        => $order->getRealOrderId(),
+            'REFERENCE'        => $reference,
             'AMOUNT'           => $price,
             'CURRENCY'         => $currency,
             'RETURN_URL'       => $this->_urlBuilder->getUrl(
-                'paygate/redirect/success',
-                [self::SECURE => true]
-            ) . '?form_key=' . $formKey . '&gid=' . $reference,
+                    'paygate/redirect/success',
+                    [self::SECURE => true]
+                ) . '?form_key=' . $formKey . '&gid=' . $reference,
             'TRANSACTION_DATE' => $DateTime->format('Y-m-d H:i:s'),
             'LOCALE'           => 'en-za',
             'COUNTRY'          => $country_code3,
@@ -635,10 +628,10 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
         }
 
         $fields['NOTIFY_URL'] = $this->_urlBuilder->getUrl(
-            'paygate/notify',
-            ['_secure' => true]
-        ) . '?eid=' . $entityOrderId;
-        $fields['USER3']      = 'magento2-v2.5.6';
+                'paygate/notify',
+                ['_secure' => true]
+            ) . '?eid=' . $orderID;
+        $fields['USER3']      = 'magento2-v2.6.0';
 
         return $fields;
     }
@@ -647,6 +640,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * Gets payment type detail
      *
      * @param string $ptd
+     *
      * @return string
      */
     public function getPaymentTypeDetail($ptd): string
@@ -670,6 +664,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * Gets payment type description
      *
      * @param string $ptd
+     *
      * @return string
      */
     public function getPaymentTypeDescription($ptd): string
@@ -693,6 +688,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * Gets payment type
      *
      * @param string $pt
+     *
      * @return string
      */
     public function getPaymentType($pt): string
@@ -712,6 +708,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * @noinspection PhpUndefinedMethodInspection
      *
      * @param Order $order
+     *
      * @return string
      */
     public function getTotalAmount($order)
@@ -729,6 +726,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * Gets number format
      *
      * @param float $number
+     *
      * @return string
      */
     public function getNumberFormat($number)
@@ -796,13 +794,25 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      *
      * @param string $url
      * @param array $fields
+     *
      * @return string
      */
-    public function curlPost($url, $fields)
+    public function guzzlePost($url, $fields)
     {
-        $this->curl->post($url, $fields);
+        try {
+            // Send a POST request using Guzzle
+            $response = $this->httpClient->post($url, [
+                'form_params' => $fields // Sending form data
+            ]);
 
-        return $this->curl->getBody();
+            // Get the response body
+            return $response->getBody()->getContents();
+        } catch (\Exception $e) {
+            // Handle the exception if the request fails
+            throw new \Magento\Framework\Exception\LocalizedException(
+                __('Failed to send request: %1', $e->getMessage())
+            );
+        }
     }
 
     /**
@@ -810,20 +820,23 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      *
      * @param Order $order
      * @param array $data
+     *
      * @return void
      */
     public function saveVaultData(Order $order, array $data): void
     {
-        $paymentToken = $this->creditCardTokenFactory->create();
+        $paymentToken = $this->paymentTokenFactory->create();
 
         $paymentToken->setGatewayToken($data['VAULT_ID']);
         $last4 = substr($data['PAYVAULT_DATA_1'], -4);
         $month = substr($data['PAYVAULT_DATA_2'], 0, 2);
         $year  = substr($data['PAYVAULT_DATA_2'], -4);
+        $type  = PaymentTokenFactoryInterface::TOKEN_TYPE_CREDIT_CARD;
+
         $paymentToken->setTokenDetails(
             json_encode(
                 [
-                    'type'           => $data['PAY_METHOD_DETAIL'],
+                    'type'           => $type,
                     'maskedCC'       => $last4,
                     'expirationDate' => "$month/$year",
                 ]
@@ -833,6 +846,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
         $expiry = $this->getExpirationDate($month, $year);
         $paymentToken->setExpiresAt($expiry);
 
+        $paymentToken->setType($type);
         $paymentToken->setMaskedCC("$last4");
         $paymentToken->setIsActive(true);
         $paymentToken->setIsVisible(true);
@@ -844,7 +858,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
 
         /* Retrieve Payment Token */
 
-        $this->creditCardTokenFactory->create();
+        $this->paymentTokenFactory->create();
         $this->addLinkToOrderPayment($paymentToken->getEntityId(), $order->getPayment()->getEntityId());
     }
 
@@ -865,12 +879,13 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * Gets selected country details
      *
      * @param string $code2
+     *
      * @return mixed|string
      */
     #[Pure] public function getCountryDetails(string $code2)
     {
         $countryDataObject = new CountryData();
-        $countries = $countryDataObject->getCountries();
+        $countries         = $countryDataObject->getCountries();
 
         foreach ($countries as $key => $val) {
             if ($key == $code2) {
@@ -885,6 +900,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * Gets order by order id
      *
      * @param int $order_id
+     *
      * @return OrderInterface
      */
     public function getOrderByOrderId(int $order_id)
@@ -982,7 +998,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
         $paymentToken->getTokenDetails();
 
         $hashKey .= $paymentToken->getPaymentMethodCode() . $paymentToken->getType() . $paymentToken->getGatewayToken(
-        ) . $paymentToken->getTokenDetails();
+            ) . $paymentToken->getTokenDetails();
 
         return $this->encryptor->getHash($hashKey);
     }
@@ -1214,6 +1230,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * To check billing country is allowed for the payment method
      *
      * @param string $country
+     *
      * @return bool
      */
     public function canUseForCountry($country)
@@ -1227,6 +1244,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
                 return false;
             }
         }
+
         return true;
     }
 
@@ -1254,6 +1272,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
                 __('We cannot retrieve the payment information object instance.')
             );
         }
+
         return $instance;
     }
 
@@ -1261,6 +1280,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * Gateway set info instance
      *
      * @param InfoInterface $info
+     *
      * @return false
      */
     public function setInfoInstance(InfoInterface $info)
@@ -1301,6 +1321,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      *
      * @param InfoInterface $payment
      * @param float $amount
+     *
      * @return PayGate
      */
     public function order(InfoInterface $payment, $amount)
@@ -1313,6 +1334,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      *
      * @param InfoInterface $payment
      * @param float $amount
+     *
      * @return PayGate
      */
     public function authorize(InfoInterface $payment, $amount)
@@ -1325,6 +1347,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      *
      * @param InfoInterface $payment
      * @param float $amount
+     *
      * @return PayGate
      */
     public function capture(InfoInterface $payment, $amount)
@@ -1337,6 +1360,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      *
      * @param InfoInterface $payment
      * @param float $amount
+     *
      * @return PayGate
      */
     public function refund(InfoInterface $payment, $amount)
@@ -1348,6 +1372,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * Gateway cancel function
      *
      * @param InfoInterface $payment
+     *
      * @return PayGate
      */
     public function cancel(InfoInterface $payment)
@@ -1359,6 +1384,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * Gateway void function
      *
      * @param InfoInterface $payment
+     *
      * @return PayGate
      */
     public function void(InfoInterface $payment)
@@ -1380,6 +1406,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * Gateway accept payment attribute
      *
      * @param InfoInterface $payment
+     *
      * @return false
      */
     public function acceptPayment(InfoInterface $payment)
@@ -1391,6 +1418,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * Gateway deny payment attribute
      *
      * @param InfoInterface $payment
+     *
      * @return PayGate
      */
     public function denyPayment(InfoInterface $payment)
@@ -1416,6 +1444,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
             $storeId = $this->_storeManager->getStore()->getId();
         }
         $path = 'payment/' . $this->getCode() . '/' . $field;
+
         return $this->_scopeConfig->getValue($path, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId);
     }
 
@@ -1423,6 +1452,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * Assign data to info model instance
      *
      * @param array|\Magento\Framework\DataObject $data
+     *
      * @return $this
      * @throws \Magento\Framework\Exception\LocalizedException
      */
@@ -1432,8 +1462,8 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
             'payment_method_assign_data_' . $this->getCode(),
             [
                 AbstractDataAssignObserver::METHOD_CODE => $this,
-                AbstractDataAssignObserver::MODEL_CODE => $this->getInfoInstance(),
-                AbstractDataAssignObserver::DATA_CODE => $data
+                AbstractDataAssignObserver::MODEL_CODE  => $this->getInfoInstance(),
+                AbstractDataAssignObserver::DATA_CODE   => $data
             ]
         );
 
@@ -1441,8 +1471,8 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
             'payment_method_assign_data',
             [
                 AbstractDataAssignObserver::METHOD_CODE => $this,
-                AbstractDataAssignObserver::MODEL_CODE => $this->getInfoInstance(),
-                AbstractDataAssignObserver::DATA_CODE => $data
+                AbstractDataAssignObserver::MODEL_CODE  => $this->getInfoInstance(),
+                AbstractDataAssignObserver::DATA_CODE   => $data
             ]
         );
 
@@ -1453,6 +1483,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * Is active
      *
      * @param int|null $storeId
+     *
      * @return bool
      */
     public function isActive($storeId = null)

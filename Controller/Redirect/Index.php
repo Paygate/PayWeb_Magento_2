@@ -1,11 +1,4 @@
 <?php
-/**
- * @noinspection PhpMissingFieldTypeInspection
- */
-
-/**
- * @noinspection PhpUndefinedNamespaceInspection
- */
 
 /**
  * @noinspection PhpUnused
@@ -35,6 +28,9 @@ use Psr\Log\LoggerInterface;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\Webapi\Rest\Response;
+use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Quote\Api\CartRepositoryInterface;
+
 
 /**
  * Responsible for loading page content.
@@ -82,6 +78,8 @@ class Index implements HttpGetActionInterface, CsrfAwareActionInterface
      * @var CustomerSession
      */
     private CustomerSession $customerSession;
+    protected OrderRepositoryInterface $orderRepository;
+    protected CartRepositoryInterface $quoteRepository;
 
     /**
      * @param ResultFactory $resultFactory
@@ -92,6 +90,8 @@ class Index implements HttpGetActionInterface, CsrfAwareActionInterface
      * @param CheckoutSession $checkoutSession
      * @param Response $response
      * @param CustomerSession $customerSession
+     * @param OrderRepositoryInterface $orderRepository
+     * @param CartRepositoryInterface $quoteRepository
      */
     public function __construct(
         ResultFactory $resultFactory,
@@ -101,16 +101,20 @@ class Index implements HttpGetActionInterface, CsrfAwareActionInterface
         Order $order,
         CheckoutSession $checkoutSession,
         Response $response,
-        CustomerSession $customerSession
+        CustomerSession $customerSession,
+        OrderRepositoryInterface $orderRepository,
+        CartRepositoryInterface $quoteRepository
     ) {
-        $this->resultFactory = $resultFactory;
-        $this->messageManager = $messageManager;
-        $this->pageFactory = $pageFactory;
-        $this->logger = $logger;
-        $this->order = $order;
+        $this->resultFactory   = $resultFactory;
+        $this->messageManager  = $messageManager;
+        $this->pageFactory     = $pageFactory;
+        $this->logger          = $logger;
+        $this->order           = $order;
         $this->checkoutSession = $checkoutSession;
-        $this->response = $response;
+        $this->response        = $response;
         $this->customerSession = $customerSession;
+        $this->orderRepository = $orderRepository;
+        $this->quoteRepository = $quoteRepository;
     }
 
     /**
@@ -140,21 +144,24 @@ class Index implements HttpGetActionInterface, CsrfAwareActionInterface
         } catch (LocalizedException $e) {
             $this->logger->error($pre . $e->getMessage());
             $this->messageManager->addExceptionMessage($e, $e->getMessage());
+
             return $resultRedirect->setPath(self::CART_URL);
         } catch (Exception $e) {
             $this->logger->error($pre . $e->getMessage());
             $this->messageManager->addExceptionMessage($e, __('We can\'t start PayGate Checkout.'));
+
             return $resultRedirect->setPath(self::CART_URL);
         }
 
         $block = $page_object->getLayout()
-            ->getBlock('paygate')
-            ->setPaymentFormData($this->order ?? null);
+                             ->getBlock('paygate')
+                             ->setPaymentFormData($this->order ?? null);
 
         $formData = $block->getFormData();
         if (isset($formData["error"])) {
             $this->logger->error("We can\'t start Paygate Checkout.");
             $this->messageManager->addErrorMessage(__('Error code: ' . $formData["error"]));
+
             return $resultRedirect->setPath(self::CART_URL);
         }
 
@@ -182,14 +189,20 @@ class Index implements HttpGetActionInterface, CsrfAwareActionInterface
         if ($this->order->getState() != Order::STATE_PENDING_PAYMENT) {
             $this->order->setState(
                 Order::STATE_PENDING_PAYMENT
-            )->save();
+            );
+            $this->orderRepository->save($this->order);
         }
 
         if ($this->order->getQuoteId()) {
             $this->checkoutSession->setPaygateQuoteId($this->checkoutSession->getQuoteId());
             $this->checkoutSession->setPaygateSuccessQuoteId($this->checkoutSession->getLastSuccessQuoteId());
             $this->checkoutSession->setPaygateRealOrderId($this->checkoutSession->getLastRealOrderId());
-            $this->checkoutSession->getQuote()->setIsActive(false)->save();
+            // Deactivate the quote and save using the repository
+            $quote = $this->checkoutSession->getQuote();
+            $quote->setIsActive(false);
+
+            // Save the quote using the repository
+            $this->quoteRepository->save($quote);
         }
 
         $this->logger->debug($pre . 'eof');
@@ -199,6 +212,7 @@ class Index implements HttpGetActionInterface, CsrfAwareActionInterface
      * Validation exception csrf
      *
      * @param RequestInterface $request
+     *
      * @return InvalidRequestException|null
      */
     public function createCsrfValidationException(RequestInterface $request): ?InvalidRequestException
@@ -210,6 +224,7 @@ class Index implements HttpGetActionInterface, CsrfAwareActionInterface
      * Validate csrf
      *
      * @param RequestInterface $request
+     *
      * @return bool|null
      */
     public function validateForCsrf(RequestInterface $request): ?bool

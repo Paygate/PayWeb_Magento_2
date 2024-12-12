@@ -1,7 +1,4 @@
 <?php
-/**
- * @noinspection PhpMissingFieldTypeInspection
- */
 
 /**
  * @noinspection PhpUndefinedNamespaceInspection
@@ -256,29 +253,29 @@ abstract class AbstractPaygate implements
      * @param ResultFactory $resultFactory
      */
     public function __construct(
-        PageFactory                     $pageFactory,
-        CustomerSession                 $customerSession,
-        CheckoutSession                 $checkoutSession,
-        OrderFactory                    $orderFactory,
-        Generic                         $paygateSession,
-        Data                            $urlHelper,
-        Url                             $customerUrl,
-        LoggerInterface                 $logger,
-        TransactionFactory              $transactionFactory,
-        InvoiceService                  $invoiceService,
-        InvoiceSender                   $invoiceSender,
-        PayGate                         $paymentMethod,
-        UrlInterface                    $urlBuilder,
-        OrderRepositoryInterface        $orderRepository,
-        StoreManagerInterface           $storeManager,
-        OrderSender                     $OrderSender,
-        DateTime                        $date,
-        CollectionFactory               $orderCollectionFactory,
-        Builder                         $_transactionBuilder,
-        ObjectManagerInterface          $objectManager,
-        Request                         $request,
-        ManagerInterface                $messageManager,
-        ResultFactory                   $resultFactory
+        PageFactory $pageFactory,
+        CustomerSession $customerSession,
+        CheckoutSession $checkoutSession,
+        OrderFactory $orderFactory,
+        Generic $paygateSession,
+        Data $urlHelper,
+        Url $customerUrl,
+        LoggerInterface $logger,
+        TransactionFactory $transactionFactory,
+        InvoiceService $invoiceService,
+        InvoiceSender $invoiceSender,
+        PayGate $paymentMethod,
+        UrlInterface $urlBuilder,
+        OrderRepositoryInterface $orderRepository,
+        StoreManagerInterface $storeManager,
+        OrderSender $OrderSender,
+        DateTime $date,
+        CollectionFactory $orderCollectionFactory,
+        Builder $_transactionBuilder,
+        ObjectManagerInterface $objectManager,
+        Request $request,
+        ManagerInterface $messageManager,
+        ResultFactory $resultFactory
     ) {
         $pre = __METHOD__ . " : ";
 
@@ -286,29 +283,29 @@ abstract class AbstractPaygate implements
 
         $this->_logger->debug($pre . 'bof');
 
-        $this->_customerSession = $customerSession;
-        $this->_checkoutSession = $checkoutSession;
-        $this->_orderFactory = $orderFactory;
-        $this->paygateSession = $paygateSession;
-        $this->_urlHelper = $urlHelper;
-        $this->_customerUrl = $customerUrl;
-        $this->pageFactory = $pageFactory;
-        $this->_invoiceService = $invoiceService;
-        $this->invoiceSender = $invoiceSender;
-        $this->OrderSender = $OrderSender;
-        $this->_transactionFactory = $transactionFactory;
-        $this->_paymentMethod = $paymentMethod;
-        $this->_urlBuilder = $urlBuilder;
-        $this->orderRepository = $orderRepository;
-        $this->_storeManager = $storeManager;
-        $this->_date = $date;
+        $this->_customerSession        = $customerSession;
+        $this->_checkoutSession        = $checkoutSession;
+        $this->_orderFactory           = $orderFactory;
+        $this->paygateSession          = $paygateSession;
+        $this->_urlHelper              = $urlHelper;
+        $this->_customerUrl            = $customerUrl;
+        $this->pageFactory             = $pageFactory;
+        $this->_invoiceService         = $invoiceService;
+        $this->invoiceSender           = $invoiceSender;
+        $this->OrderSender             = $OrderSender;
+        $this->_transactionFactory     = $transactionFactory;
+        $this->_paymentMethod          = $paymentMethod;
+        $this->_urlBuilder             = $urlBuilder;
+        $this->orderRepository         = $orderRepository;
+        $this->_storeManager           = $storeManager;
+        $this->_date                   = $date;
         $this->_orderCollectionFactory = $orderCollectionFactory;
-        $this->_transactionBuilder = $_transactionBuilder;
-        $this->objectManager = $objectManager;
-        $this->request = $request;
-        $this->messageManager = $messageManager;
+        $this->_transactionBuilder     = $_transactionBuilder;
+        $this->objectManager           = $objectManager;
+        $this->request                 = $request;
+        $this->messageManager          = $messageManager;
 
-        $parameters = ['params' => [$this->_configMethod]];
+        $parameters    = ['params' => [$this->_configMethod]];
         $this->_config = $this->objectManager->create($this->_configType, $parameters);
 
         $this->_logger->debug($pre . 'eof');
@@ -378,6 +375,7 @@ abstract class AbstractPaygate implements
      *
      * @param Order|null $order
      * @param array $paymentData
+     *
      * @return string
      */
     public function createTransaction(Order $order = null, array $paymentData = []): string
@@ -392,10 +390,10 @@ abstract class AbstractPaygate implements
             // Get payment object from order object
             $payment = $order->getPayment();
             $payment->setLastTransId($paymentData['PAY_REQUEST_ID'])
-                ->setTransactionId($paymentData['PAY_REQUEST_ID'])
-                ->setAdditionalInformation(
-                    [Transaction::RAW_DETAILS => (array)$paymentData]
-                );
+                    ->setTransactionId($paymentData['PAY_REQUEST_ID'])
+                    ->setAdditionalInformation(
+                        [Transaction::RAW_DETAILS => (array)$paymentData]
+                    );
             $formattedPrice = $order->getBaseCurrency()->formatTxt(
                 $order->getGrandTotal()
             );
@@ -404,26 +402,26 @@ abstract class AbstractPaygate implements
 
             $message = __($ipnOrRedirect . ': The authorized amount is %1.', $formattedPrice);
             // Get the object of builder class
-            $trans = $this->_transactionBuilder;
+            $trans       = $this->_transactionBuilder;
             $transaction = $trans->setPayment($payment)
-                ->setOrder($order)
-                ->setTransactionId($paymentData['PAY_REQUEST_ID'])
-                ->setAdditionalInformation(
-                    [Transaction::RAW_DETAILS => (array)$paymentData]
-                )
-                ->setFailSafe(true)
+                                 ->setOrder($order)
+                                 ->setTransactionId($paymentData['PAY_REQUEST_ID'])
+                                 ->setAdditionalInformation(
+                                     [Transaction::RAW_DETAILS => (array)$paymentData]
+                                 )
+                                 ->setFailSafe(true)
                 // Build method creates the transaction and returns the object
-                ->build(Transaction::TYPE_CAPTURE);
+                                 ->build(Transaction::TYPE_CAPTURE);
 
             $payment->addTransactionCommentsToOrder(
                 $transaction,
                 $message
             );
             $payment->setParentTransactionId(null);
-            $payment->save();
-            $order->save();
+            // Instead of saving payment and order separately, save using order repository
+            $this->orderRepository->save($order);
 
-            $response = $transaction->save()->getTransactionId();
+            $response = $transaction->getTransactionId();
         } catch (Exception $e) {
             $this->_logger->error($e->getMessage());
         }
@@ -471,6 +469,7 @@ abstract class AbstractPaygate implements
      * Csrf null exception
      *
      * @param RequestInterface $request
+     *
      * @return InvalidRequestException|null
      */
     public function createCsrfValidationException(RequestInterface $request): ?InvalidRequestException
@@ -482,6 +481,7 @@ abstract class AbstractPaygate implements
      * Csrf validation
      *
      * @param RequestInterface $request
+     *
      * @return bool|null
      */
     public function validateForCsrf(RequestInterface $request): ?bool

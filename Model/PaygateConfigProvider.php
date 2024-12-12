@@ -1,7 +1,4 @@
 <?php
-/**
- * @noinspection PhpUndefinedNamespaceInspection
- */
 
 /**
  * @noinspection PhpUnused
@@ -29,7 +26,7 @@ use Magento\Framework\Locale\ResolverInterface;
 use Magento\Framework\UrlInterface;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
-use Magento\Payment\Model\Method\AbstractMethod;
+use Magento\Payment\Model\MethodInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use PayGate\PayWeb\Helper\Data as PaygateHelper;
@@ -87,7 +84,7 @@ class PaygateConfigProvider implements ConfigProviderInterface
     ];
 
     /**
-     * @var AbstractMethod[]
+     * @var MethodInterface[]
      */
     protected array $methods = [];
 
@@ -128,6 +125,7 @@ class PaygateConfigProvider implements ConfigProviderInterface
      * @param UrlInterface $urlBuilder
      * @param RequestInterface $request
      * @param PayGate $paymentMethod
+     *
      * @throws LocalizedException
      */
     public function __construct(
@@ -251,32 +249,32 @@ class PaygateConfigProvider implements ConfigProviderInterface
         );
 
         $allTypes = [
-            'CC'           => [
+            'CC'            => [
                 'value' => 'CC',
                 'label' => $this->paymentMethod->getPaymentTypeDescription('CC'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/mastercard-visa.svg'),
             ],
-            'BT'           => [
+            'BT'            => [
                 'value' => 'BT',
                 'label' => $this->paymentMethod->getPaymentTypeDescription('BT'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/sid.svg'),
             ],
-            'EW-Zapper'    => [
+            'EW-Zapper'     => [
                 'value' => 'EW-Zapper',
                 'label' => $this->paymentMethod->getPaymentTypeDescription('EW-Zapper'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/zapper.svg'),
             ],
-            'EW-SnapScan'  => [
+            'EW-SnapScan'   => [
                 'value' => 'EW-SnapScan',
                 'label' => $this->paymentMethod->getPaymentTypeDescription('EW-SnapScan'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/snapscan.svg'),
             ],
-            'EW-Mobicred'  => [
+            'EW-Mobicred'   => [
                 'value' => 'EW-Mobicred',
                 'label' => $this->paymentMethod->getPaymentTypeDescription('EW-Mobicred'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/mobicred.svg'),
             ],
-            'EW-Momopay'   => [
+            'EW-Momopay'    => [
                 'value' => 'EW-Momopay',
                 'label' => $this->paymentMethod->getPaymentTypeDescription('EW-Momopay'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/momopay.svg'),
@@ -286,22 +284,22 @@ class PaygateConfigProvider implements ConfigProviderInterface
                 'label' => $this->paymentMethod->getPaymentTypeDescription('EW-MasterPass'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/scan-to-pay.svg'),
             ],
-            'EW-PayPal'    => [
+            'EW-PayPal'     => [
                 'value' => 'EW-PayPal',
                 'label' => $this->paymentMethod->getPaymentTypeDescription('EW-PayPal'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/paypal.svg'),
             ],
-            'EW-Samsungpay'    => [
+            'EW-Samsungpay' => [
                 'value' => 'EW-Samsungpay',
                 'label' => $this->paymentMethod->getPaymentTypeDescription('EW-Samsungpay'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/samsung-pay.svg'),
             ],
-            'CC-Applepay'    => [
+            'CC-Applepay'   => [
                 'value' => 'CC-Applepay',
                 'label' => $this->paymentMethod->getPaymentTypeDescription('CC-Applepay'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/apple-pay.svg'),
             ],
-            'CC-RCS'    => [
+            'CC-RCS'        => [
                 'value' => 'CC-RCS',
                 'label' => $this->paymentMethod->getPaymentTypeDescription('CC-RCS'),
                 'image' => $this->getViewFileUrl('PayGate_PayWeb::images/rcs.svg'),
@@ -322,7 +320,7 @@ class PaygateConfigProvider implements ConfigProviderInterface
      * Retrieve url of a view file
      *
      * @param string $fileId
-     * @param array  $params
+     * @param array $params
      *
      * @return string
      */

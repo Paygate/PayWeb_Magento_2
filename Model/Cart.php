@@ -1,15 +1,9 @@
 <?php
-/**
- * @noinspection PhpMissingFieldTypeInspection
- */
-
-/**
- * @noinspection PhpUndefinedNamespaceInspection
- */
 
 /**
  * @noinspection PhpUnused
  */
+
 /*
  * Copyright (c) 2024 Payfast (Pty) Ltd
  *
@@ -32,27 +26,18 @@ class Cart extends \Magento\Payment\Model\Cart
      * @var bool
      */
     protected bool $_areAmountsValid = false;
+
     /**
      * Get shipping, tax, subtotal and discount amounts all together
      *
      * @return       array
-     * @noinspection PhpUndefinedClassConstantInspection
-     * @noinspection PhpUndefinedMethodInspection
      */
     public function getAmounts(): array
     {
         $this->_collectItemsAndAmounts();
 
-        if (! $this->_areAmountsValid) {
-            $subtotal = $this->getSubtotal() + $this->getTax();
-
-            if (empty($this->_transferFlags[self::AMOUNT_SHIPPING])) {
-                $subtotal += $this->getShipping();
-            }
-
-            if (empty($this->_transferFlags[self::AMOUNT_DISCOUNT])) {
-                $subtotal -= $this->getDiscount();
-            }
+        if (!$this->_areAmountsValid) {
+            $subtotal = $this->_calculateAdjustedSubtotal();
 
             return [self::AMOUNT_SUBTOTAL => $subtotal];
         }
@@ -93,8 +78,6 @@ class Cart extends \Magento\Payment\Model\Cart
      * Check the line items and totals according to Paygate business logic limitations
      *
      * @return       void
-     * @noinspection PhpUndefinedClassConstantInspection
-     * @noinspection PhpUndefinedMethodInspection
      */
     protected function _validate()
     {
@@ -103,24 +86,9 @@ class Cart extends \Magento\Payment\Model\Cart
 
         $referenceAmount = $this->_salesModel->getDataUsingMethod('base_grand_total');
 
-        $itemsSubtotal = 0;
-        foreach ($this->getAllItems() as $i) {
-            $itemsSubtotal = $itemsSubtotal + $i->getQty() * $i->getAmount();
-        }
-
-        $sum = $itemsSubtotal + $this->getTax();
-
-        if (empty($this->_transferFlags[self::AMOUNT_SHIPPING])) {
-            $sum += $this->getShipping();
-        }
-
-        if (empty($this->_transferFlags[self::AMOUNT_DISCOUNT])) {
-            $sum -= $this->getDiscount();
-            // Paygate requires to have discount less than items subtotal
-            $this->_areAmountsValid = round($this->getDiscount(), 4) < round($itemsSubtotal, 4);
-        } else {
-            $this->_areAmountsValid = $itemsSubtotal > 0.00001;
-        }
+        $itemsSubtotal = $this->_calculateItemsSubtotal();
+        $sum           = $itemsSubtotal + $this->getTax();
+        $sum           = $this->_applyTransferFlags($sum, $itemsSubtotal);
 
         /**
          * Numbers are intentionally converted to string by reason of possible comparison error
@@ -133,7 +101,7 @@ class Cart extends \Magento\Payment\Model\Cart
 
         $areItemsValid = $areItemsValid && $this->_areAmountsValid;
 
-        if (! $areItemsValid) {
+        if (!$areItemsValid) {
             $this->_salesModelItems = [];
             $this->_customItems     = [];
         }
@@ -143,7 +111,6 @@ class Cart extends \Magento\Payment\Model\Cart
      * Import items from sales model with workarounds for Paygate
      *
      * @return       void
-     * @noinspection PhpUndefinedMethodInspection
      */
     protected function _importItemsFromSalesModel()
     {
@@ -154,28 +121,11 @@ class Cart extends \Magento\Payment\Model\Cart
                 continue;
             }
 
-            $amount = $item->getPrice();
+            $amount = $this->_calculateItemAmount($item);
             $qty    = $item->getQty();
 
-            $subAggregatedLabel = '';
-
-            // Workaround in case if item subtotal precision is not compatible with Paygate (.2)
-            if ($amount - round($amount, 2)) {
-                $amount             = $amount * $qty;
-                $subAggregatedLabel = ' x' . $qty;
-                $qty                = 1;
-            }
-
-            // Aggregate item price if item qty * price does not match row total
-            $itemBaseRowTotal = $item->getOriginalItem()->getBaseRowTotal();
-            if ($amount * $qty != $itemBaseRowTotal) {
-                $amount             = (double)$itemBaseRowTotal;
-                $subAggregatedLabel = ' x' . $qty;
-                $qty                = 1;
-            }
-
             $this->_salesModelItems[] = $this->_createItemFromData(
-                $item->getName() . $subAggregatedLabel,
+                $item->getName() . $this->_getSubAggregatedLabel($amount, $qty),
                 $qty,
                 $amount
             );
@@ -185,6 +135,81 @@ class Cart extends \Magento\Payment\Model\Cart
         $this->addTax($this->_salesModel->getBaseTaxAmount());
         $this->addShipping($this->_salesModel->getBaseShippingAmount());
         $this->addDiscount(abs($this->_salesModel->getBaseDiscountAmount()));
+    }
+
+    private function _calculateAdjustedSubtotal()
+    {
+        $subtotal = $this->getSubtotal() + $this->getTax();
+
+        if (empty($this->_transferFlags[self::AMOUNT_SHIPPING])) {
+            $subtotal += $this->getShipping();
+        }
+
+        if (empty($this->_transferFlags[self::AMOUNT_DISCOUNT])) {
+            $subtotal -= $this->getDiscount();
+        }
+
+        return $subtotal;
+    }
+
+    private function _calculateItemsSubtotal()
+    {
+        $itemsSubtotal = 0;
+        foreach ($this->getAllItems() as $i) {
+            $itemsSubtotal += $i->getQty() * $i->getAmount();
+        }
+
+        return $itemsSubtotal;
+    }
+
+    private function _applyTransferFlags($sum, $itemsSubtotal)
+    {
+        $sum = $this->_applyShippingTransferFlag($sum);
+        $sum = $this->_applyDiscountTransferFlag($sum, $itemsSubtotal);
+
+        return $sum;
+    }
+
+    private function _applyShippingTransferFlag($sum)
+    {
+        if (empty($this->_transferFlags[self::AMOUNT_SHIPPING])) {
+            $sum += $this->getShipping();
+        }
+
+        return $sum;
+    }
+
+    private function _applyDiscountTransferFlag($sum, $itemsSubtotal)
+    {
+        if (empty($this->_transferFlags[self::AMOUNT_DISCOUNT])) {
+            $sum -= $this->getDiscount();
+            // Paygate requires the discount to be less than items subtotal
+            $this->_areAmountsValid = round($this->getDiscount(), 4) < round($itemsSubtotal, 4);
+        } else {
+            $this->_areAmountsValid = $itemsSubtotal > 0.00001;
+        }
+
+        return $sum;
+    }
+
+    private function _calculateItemAmount($item)
+    {
+        $amount           = $item->getPrice();
+        $qty              = $item->getQty();
+        $itemBaseRowTotal = $item->getOriginalItem()->getBaseRowTotal();
+
+        // Aggregate item price if item qty * price does not match row total
+        if ($amount * $qty != $itemBaseRowTotal) {
+            $amount = (double)$itemBaseRowTotal;
+        }
+
+        return $amount;
+    }
+
+    private function _getSubAggregatedLabel($amount, $qty)
+    {
+        // Workaround in case if item subtotal precision is not compatible with Paygate (.2)
+        return ($amount - round($amount, 2)) ? ' x' . $qty : '';
     }
 
     /**
@@ -207,7 +232,6 @@ class Cart extends \Magento\Payment\Model\Cart
      * @param SalesModelInterface $salesEntity
      *
      * @return void
-     * @noinspection PhpUndefinedMethodInspection
      */
     protected function _applyDiscountTaxCompensationWorkaround(
         SalesModelInterface $salesEntity

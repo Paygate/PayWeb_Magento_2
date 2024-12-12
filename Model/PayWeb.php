@@ -18,26 +18,26 @@
 
 namespace PayGate\PayWeb\Model;
 
-use Magento\Checkout\Model\Cart;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Data\Form\FormKey;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\UrlInterface;
 use Magento\Quote\Model\QuoteFactory;
-use Magento\Quote\Model\Quote;
 use Magento\Store\Model\StoreManagerInterface;
 use PayGate\PayWeb\Api\Data\PayWebApiInterface;
 use PayGate\PayWeb\Helper\Data;
 use PayGate\PayWeb\Model\PayGate as PayGateModel;
 use Laminas\Uri\Uri;
+use Magento\Quote\Api\CartRepositoryInterface;
 
 class PayWeb implements PayWebApiInterface
 {
     public const SECURE = '_secure';
 
     /**
-     * @var Cart
+     * @var CartRepositoryInterface
      */
-    protected Cart $cart;
+    protected CartRepositoryInterface $quoteRepository;
 
     /**
      * @var CustomerRepositoryInterface
@@ -81,7 +81,7 @@ class PayWeb implements PayWebApiInterface
     /**
      * Builds PayWeb Object
      *
-     * @param Cart $cart
+     * @param CartRepositoryInterface $quoteRepository
      * @param CustomerRepositoryInterface $customerRepositoryInterface
      * @param QuoteFactory $quoteFactory
      * @param PayGate $paygatemodel
@@ -92,7 +92,7 @@ class PayWeb implements PayWebApiInterface
      * @param Uri $uriHandler
      */
     public function __construct(
-        Cart $cart,
+        CartRepositoryInterface $quoteRepository,
         CustomerRepositoryInterface $customerRepositoryInterface,
         QuoteFactory $quoteFactory,
         PayGateModel $paygatemodel,
@@ -102,7 +102,7 @@ class PayWeb implements PayWebApiInterface
         StoreManagerInterface $storeManager,
         Uri $uriHandler
     ) {
-        $this->cart                         = $cart;
+        $this->quoteRepository              = $quoteRepository;
         $this->_customerRepositoryInterface = $customerRepositoryInterface;
         $this->quoteFactory                 = $quoteFactory;
         $this->_paygatemodel                = $paygatemodel;
@@ -117,11 +117,13 @@ class PayWeb implements PayWebApiInterface
      * Cart quote
      *
      * @param int $quoteId
-     * @return Quote
+     *
+     * @return \Magento\Quote\Api\Data\CartInterface
+     * @throws NoSuchEntityException
      */
-    public function getQuote(int $quoteId): Quote
+    public function getQuote(int $quoteId): \Magento\Quote\Api\Data\CartInterface
     {
-        return $this->quoteFactory->create()->load($quoteId);
+        return $this->quoteRepository->get($quoteId);
     }
 
     /**
@@ -146,7 +148,7 @@ class PayWeb implements PayWebApiInterface
         $fields['CHECKSUM'] = md5(implode('', $fields) . $encryptionKey);
         //@codingStandardsIgnoreEnd
 
-        $response = $paygateModel->curlPost('https://secure.paygate.co.za/payweb3/initiate.trans', $fields);
+        $response = $paygateModel->guzzlePost('https://secure.paygate.co.za/payweb3/initiate.trans', $fields);
 
         $this->uriHandler->setQuery($response);
 
@@ -160,7 +162,7 @@ class PayWeb implements PayWebApiInterface
         } else {
             $result['PAYMENT_TITLE'] = "PAYGATE_PAYWEB";
             $this->_PaygateHelper->createTransaction($order, $result);
-            if (! str_contains($response, "ERROR")) {
+            if (!str_contains($response, "ERROR")) {
                 $processData = [
                     'PAY_REQUEST_ID' => $result['PAY_REQUEST_ID'],
                     'CHECKSUM'       => $result['CHECKSUM'],

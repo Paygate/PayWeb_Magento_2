@@ -14,16 +14,17 @@
 <p>Redirecting to Paygate...</p>
 <form class="checkout" name="<?= $block->escapeHtml($block->getName()); ?>"
       id="<?=
-        $block->escapeHtml($block->getId()); ?>"
+      $block->escapeHtml($block->getId()); ?>"
       action="<?=
-        $block->escapeHtml($block->getFormAction()); ?>"
+      $block->escapeHtml($block->getFormAction()); ?>"
       method="post" class="multicheckout">
     <?php
     foreach ($block->getFormData() as $item => $value): ?>
         <input type="hidden" name="<?=
         $block->escapeHtml($item); ?>" value="<?=
         $block->escapeHtml($value); ?>" size="200">
-        <?php
+    <?php
     endforeach; ?>
 </form>
-<?= /* @noEscape */ $block->getSubmitForm();?>
+<?= /* @noEscape */
+$block->getSubmitForm(); ?>

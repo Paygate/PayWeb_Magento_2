@@ -3,14 +3,6 @@
  * @noinspection PhpUnused
  */
 
-/**
- * @noinspection PhpUndefinedNamespaceInspection
- */
-
-/**
- * @noinspection PhpUndefinedNamespaceInspection
- */
-
 /*
  * Copyright (c) 2024 Payfast (Pty) Ltd
  *
@@ -29,7 +21,7 @@ class CardRenderer extends AbstractCardRenderer
     /**
      * Can render specified token
      *
-     * @param        PaymentTokenInterface $token
+     * @param PaymentTokenInterface $token
      *
      * @return       boolean
      * @since        100.1.0

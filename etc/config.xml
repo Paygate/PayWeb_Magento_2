@@ -19,7 +19,7 @@
                 <paygate_id>10011072130</paygate_id>
                 <encryption_key>secret</encryption_key>
                 <test_mode>1</test_mode>
-                <ipn_method>1</ipn_method>
+                <ipn_method>0</ipn_method>
                 <instructions>Pay via Paygate</instructions>
                 <order_email>1</order_email>
                 <invoice_email>0</invoice_email>

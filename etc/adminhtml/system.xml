@@ -116,7 +116,8 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <config_path>payment/paygate/paygate_pay_method_active</config_path>
                 </field>
-                <field id="paygate_force_payment_type" translate="label" type="select" sortOrder="15.5" showInDefault="1"
+                <field id="paygate_force_payment_type" translate="label" type="select" sortOrder="15.5"
+                       showInDefault="1"
                        showInWebsite="1" showInStore="0">
                     <label>Force Payment Type Selection</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>

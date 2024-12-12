@@ -1,11 +1,4 @@
 <?php
-/**
- * @noinspection PhpMissingFieldTypeInspection
- */
-
-/**
- * @noinspection PhpUndefinedNamespaceInspection
- */
 
 /**
  * Copyright (c) 2024 Payfast (Pty) Ltd
@@ -71,12 +64,12 @@ class Form extends \Magento\Payment\Block\Form
     protected $_logger;
 
     /**
-     * @param Context           $context
-     * @param ConfigFactory     $paygateConfigFactory
+     * @param Context $context
+     * @param ConfigFactory $paygateConfigFactory
      * @param ResolverInterface $localeResolver
-     * @param Data              $paygateData
-     * @param CurrentCustomer   $currentCustomer
-     * @param array             $data
+     * @param Data $paygateData
+     * @param CurrentCustomer $currentCustomer
+     * @param array $data
      */
     public function __construct(
         Context $context,
