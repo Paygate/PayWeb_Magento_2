@@ -3,10 +3,6 @@
  * @noinspection PhpPropertyOnlyWrittenInspection
  */
 
-/**
- * @noinspection PhpUndefinedNamespaceInspection
- */
-
 /*
  * Copyright (c) 2024 Payfast (Pty) Ltd
  *
@@ -38,10 +34,10 @@ class Info extends \Magento\Payment\Block\Info
     private Config $_paymentConfig;
 
     /**
-     * @param Context     $context
-     * @param Config      $paymentConfig
+     * @param Context $context
+     * @param Config $paymentConfig
      * @param InfoFactory $PaygateInfoFactory
-     * @param array       $data
+     * @param array $data
      */
     public function __construct(
         Context $context,

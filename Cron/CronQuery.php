@@ -1,7 +1,4 @@
 <?php
-/**
- * @noinspection PhpUndefinedNamespaceInspection
- */
 
 /**
  * @noinspection PhpUnused
@@ -122,7 +119,7 @@ class CronQuery
         $this->state->emulateAreaCode(
             Area::AREA_FRONTEND,
             function () {
-                $cutoffTime = (new DateTime())->sub(new DateInterval('PT10M'))->format('Y-m-d H:i:s');
+                $cutoffTime = (new DateTime())->sub(new DateInterval('PT60M'))->format('Y-m-d H:i:s');
                 $this->_logger->info('Cutoff: ' . $cutoffTime);
                 $ocf = $this->_orderCollectionFactory->create();
                 $ocf->addAttributeToSelect('entity_id');
@@ -140,14 +137,15 @@ class CronQuery
                         $order_id
                     )->getFirstItem();
 
-                    $transactionId   = $transaction->getData('txn_id');
-                    $order           = $this->orderRepository->get($orderId['entity_id']);
+                    $transactionId = $transaction->getData('txn_id');
+                    $order         = $this->orderRepository->get($orderId['entity_id']);
                     //Get Payment
-                    $payment = $order->getPayment();
+                    $payment           = $order->getPayment();
                     $paymentMethodType = $payment
-                        ->getAdditionalInformation()['raw_details_info']["PAYMENT_METHOD_TYPE"] ?? "0";
-                    $PaymentTitle    = $order->getPayment()->getMethodInstance()->getTitle();
-                    $transactionData = $transaction->getData();
+                                             ->getAdditionalInformation(
+                                             )['raw_details_info']["PAYMENT_METHOD_TYPE"] ?? "0";
+                    $PaymentTitle      = $order->getPayment()->getMethodInstance()->getTitle();
+                    $transactionData   = $transaction->getData();
                     if (isset($transactionData['additional_information']['raw_details_info'])) {
                         $add_info = $transactionData['additional_information']['raw_details_info'];
                         if (isset($add_info['PAYMENT_TITLE'])) {
@@ -155,7 +153,7 @@ class CronQuery
                         }
                     }
 
-                    if (! empty($transactionId) && $PaymentTitle === "PAYGATE_PAYWEB") {
+                    if (!empty($transactionId) && $PaymentTitle === "PAYGATE_PAYWEB") {
                         $this->_logger->info('Processing order #' . $orderId['entity_id']);
                         $orderquery['orderId']        = $order->getRealOrderId();
                         $orderquery['country']        = $order->getBillingAddress()->getCountryId();
@@ -166,7 +164,7 @@ class CronQuery
 
                         $result = explode("&", $this->paygateHelper->getQueryResult($orderquery));
 
-                        $result['PAYMENT_TITLE'] = "PAYGATE_PAYWEB";
+                        $result['PAYMENT_TITLE']       = "PAYGATE_PAYWEB";
                         $result["PAYMENT_METHOD_TYPE"] = $paymentMethodType;
                         $this->paygateHelper->updatePaymentStatus($order, $result);
                     }

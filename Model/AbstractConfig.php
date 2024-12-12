@@ -1,7 +1,4 @@
 <?php
-/**
- * @noinspection PhpUndefinedNamespaceInspection
- */
 
 /**
  * @noinspection PhpUnused
@@ -27,8 +24,8 @@ use Magento\Payment\Gateway\Config\Config;
  */
 abstract class AbstractConfig extends Config
 {
-    public const PAYMENT_ACTION_SALE = 'Sale';
-    public const PAYMENT_ACTION_AUTH = 'Authorization';
+    public const PAYMENT_ACTION_SALE  = 'Sale';
+    public const PAYMENT_ACTION_AUTH  = 'Authorization';
     public const PAYMENT_ACTION_ORDER = 'Order';
 
     /**
@@ -126,18 +123,17 @@ abstract class AbstractConfig extends Config
     /**
      * Returns payment configuration value
      *
-     * @param string $key
+     * @param string $field
      * @param int|null $storeId
      *
      * @return null|string
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      * @noinspection PhpUnusedParameterInspection
-     * @noinspection PhpMissingParamTypeInspection
      */
-    public function getValue($key, $storeId = null): ?string
+    public function getValue($field, $storeId = null): ?string
     {
-        $underscored = strtolower(preg_replace('/(.)([A-Z])/', "$1_$2", $key));
+        $underscored = strtolower(preg_replace('/(.)([A-Z])/', "$1_$2", $field));
         $path        = $this->_getSpecificConfigPath($underscored);
 
         if ($path !== null) {
@@ -159,7 +155,6 @@ abstract class AbstractConfig extends Config
      * @param string $methodCode
      *
      * @return void
-     * @noinspection PhpMissingParamTypeInspection
      */
     public function setMethodCode($methodCode)
     {
@@ -172,7 +167,6 @@ abstract class AbstractConfig extends Config
      * @param string $pathPattern
      *
      * @return void
-     * @noinspection PhpMissingParamTypeInspection
      */
     public function setPathPattern($pathPattern)
     {

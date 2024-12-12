@@ -1,7 +1,4 @@
 <?php
-/**
- * @noinspection PhpUndefinedNamespaceInspection
- */
 
 /**
  * @noinspection PhpUnused
@@ -32,14 +29,13 @@ class SavePaymentTypeToOrderObserver extends AbstractDataAssignObserver
      * @param Observer $observer
      *
      * @return void
-     * @noinspection PhpUndefinedMethodInspection
      */
     public function execute(Observer $observer)
     {
         $data = $this->readDataArgument($observer);
 
         $additionalData = $data->getData(PaymentInterface::KEY_ADDITIONAL_DATA);
-        if (! is_array($additionalData) || ! isset($additionalData[self::PAYGATE_PAYMENT_TYPE])) {
+        if (!is_array($additionalData) || !isset($additionalData[self::PAYGATE_PAYMENT_TYPE])) {
             return;
         }
 

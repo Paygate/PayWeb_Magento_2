@@ -2,6 +2,7 @@
 <schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
     <table name="sales_order">
-        <column xsi:type="int" name="payweb_payment_processed" nullable="true" default="0" comment="PayWeb Payment Processed"/>
+        <column xsi:type="int" name="payweb_payment_processed" nullable="true" default="0"
+                comment="PayWeb Payment Processed"/>
     </table>
 </schema>

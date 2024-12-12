@@ -3,8 +3,6 @@
 
 /** @noinspection PhpPropertyOnlyWrittenInspection */
 
-/** @noinspection PhpUndefinedNamespaceInspection */
-
 /** @noinspection PhpUnused */
 
 /*
@@ -25,7 +23,6 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\UrlInterface;
 use Magento\Framework\View\Asset\Repository;
-use Magento\Payment\Model\Method\AbstractMethod;
 use Magento\Payment\Model\MethodInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
@@ -62,7 +59,7 @@ class Config extends AbstractConfig
      * Currency codes supported by Paygate methods
      * @var string[]
      */
-    protected array $_supportedCurrencyCodes = ['USD', 'EUR', 'GPD', 'ZAR'];
+    protected array $_supportedCurrencyCodes = ['USD', 'EUR', 'GPD', 'ZAR', 'BWP', 'NAD'];
 
     /**
      * @var LoggerInterface
@@ -376,7 +373,7 @@ class Config extends AbstractConfig
      */
     protected function _getSupportedLocaleCode(string $localeCode = null): string
     {
-        if (! $localeCode || ! in_array($localeCode, $this->_supportedImageLocales)) {
+        if (!$localeCode || !in_array($localeCode, $this->_supportedImageLocales)) {
             return 'en_US';
         }
 

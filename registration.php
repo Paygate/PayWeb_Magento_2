@@ -1,7 +1,4 @@
 <?php
-/**
- * @noinspection PhpUndefinedNamespaceInspection
- */
 
 /*
  * Copyright (c) 2024 Payfast (Pty) Ltd

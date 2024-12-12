@@ -1,7 +1,4 @@
 <?php
-/**
- * @noinspection PhpMissingFieldTypeInspection
- */
 
 /**
  * @noinspection PhpUndefinedNamespaceInspection
@@ -30,7 +27,7 @@ use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\DB\Transaction as DBTransaction;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Quote\Model\Quote;
+use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Api\Data\TransactionSearchResultInterfaceFactory;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
@@ -39,11 +36,16 @@ use Magento\Sales\Model\Order\Invoice;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder;
 use Magento\Sales\Model\Service\InvoiceService;
-use Magento\Store\Model\Store;
+use Magento\Quote\Api\Data\CartInterface;
 use PayGate\PayWeb\Model\Config as PayGateConfig;
 use PayGate\PayWeb\Model\ConfigFactory;
 use Psr\Log\LoggerInterface;
-use Magento\Framework\HTTP\Client\Curl;
+use GuzzleHttp\Client;
+use Magento\Payment\Api\PaymentMethodListInterface;
+use Magento\Sales\Api\OrderItemRepositoryInterface;
+use Magento\Sales\Api\OrderStatusHistoryRepositoryInterface;
+use Magento\Sales\Api\Data\OrderStatusHistoryInterfaceFactory;
+
 
 /**
  * PayGate Data helper
@@ -102,9 +104,23 @@ class Data extends AbstractHelper
      */
     private ConfigFactory|PayGateConfig $_paygateconfig;
     /**
-     * @var Curl
+     * @var Client
      */
-    private Curl $curl;
+    protected Client $httpClient;
+    protected PaymentMethodListInterface $paymentMethodList;
+    private OrderRepositoryInterface $orderRepository;
+    /**
+     * @var OrderItemRepositoryInterface
+     */
+    private OrderItemRepositoryInterface $orderItemRepository;
+    /**
+     * @var OrderStatusHistoryRepositoryInterface
+     */
+    private OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository;
+    /**
+     * @var OrderStatusHistoryInterfaceFactory
+     */
+    private OrderStatusHistoryInterfaceFactory $historyFactory;
 
     /**
      * @param Context $context
@@ -118,7 +134,12 @@ class Data extends AbstractHelper
      * @param InvoiceService $invoiceService
      * @param InvoiceSender $invoiceSender
      * @param array $methodCodes
-     * @param Curl $curl
+     * @param Client $httpClient
+     * @param PaymentMethodListInterface $paymentMethodList
+     * @param OrderRepositoryInterface $orderRepository
+     * @param OrderItemRepositoryInterface $orderItemRepository
+     * @param OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository
+     * @param OrderStatusHistoryInterfaceFactory $historyFactory
      */
     public function __construct(
         Context $context,
@@ -132,9 +153,14 @@ class Data extends AbstractHelper
         InvoiceService $invoiceService,
         InvoiceSender $invoiceSender,
         array $methodCodes,
-        Curl $curl
+        Client $httpClient,
+        PaymentMethodListInterface $paymentMethodList,
+        OrderRepositoryInterface $orderRepository,
+        OrderItemRepositoryInterface $orderItemRepository,
+        OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository,
+        OrderStatusHistoryInterfaceFactory $historyFactory
     ) {
-        $this->_logger        = $context->getLogger();
+        $this->_logger = $context->getLogger();
 
         $pre = __METHOD__ . " : ";
         $this->_logger->debug($pre . 'bof, methodCodes is : ', $methodCodes);
@@ -153,7 +179,12 @@ class Data extends AbstractHelper
         $this->_invoiceService                         = $invoiceService;
         $this->invoiceSender                           = $invoiceSender;
         $this->dbTransaction                           = $dbTransaction;
-        $this->curl                                   = $curl;
+        $this->httpClient                              = $httpClient;
+        $this->paymentMethodList                       = $paymentMethodList;
+        $this->orderRepository                         = $orderRepository;
+        $this->orderItemRepository                     = $orderItemRepository;
+        $this->orderStatusHistoryRepository            = $orderStatusHistoryRepository;
+        $this->historyFactory                          = $historyFactory;
     }
 
     /**
@@ -173,17 +204,18 @@ class Data extends AbstractHelper
     /**
      * Retrieve available billing agreement methods
      *
-     * @param bool|int|string|Store|null $store
-     * @param Quote|null $quote
+     * @param CartInterface $quote
      *
      * @return MethodInterface[]
      */
-    public function getBillingAgreementMethods(Store|bool|int|string $store = null, Quote $quote = null): array
+    public function getBillingAgreementMethods(CartInterface $quote): array
     {
         $pre = __METHOD__ . " : ";
         $this->_logger->debug($pre . 'bof');
-        $result = [];
-        foreach ($this->_paymentData->getStoreMethods($store, $quote) as $method) {
+        $result           = [];
+        $availableMethods = $this->paymentMethodList->getActiveList($quote->getId());
+
+        foreach ($availableMethods as $method) {
             if ($method instanceof MethodInterface) {
                 $result[] = $method;
             }
@@ -197,6 +229,7 @@ class Data extends AbstractHelper
      * Gets config data for field
      *
      * @param string $field
+     *
      * @return mixed
      */
     public function getConfigData(string $field): mixed
@@ -208,6 +241,7 @@ class Data extends AbstractHelper
      * Fetch Paygate transaction
      *
      * @param array $orderQuery
+     *
      * @return bool|string
      * @noinspection PhpUndefinedMethodInspection
      */
@@ -237,18 +271,22 @@ class Data extends AbstractHelper
         $data['CHECKSUM'] = $checksum;
 
         $fieldsString = http_build_query($data);
-
-        $this->curl->post('https://secure.paygate.co.za/payweb3/query.trans', $fieldsString);
+        $response     = $this->httpClient->post('https://secure.paygate.co.za/payweb3/query.trans', [
+            'headers' => [
+                'Content-Type' => 'application/x-www-form-urlencoded',
+            ],
+            'body'    => $fieldsString,
+        ]);
 
         // Execute post
-        $result = $this->curl->getBody();
+        $responseBody = $response->getBody()->getContents();
 
         if ($enableLogging) {
             $this->_logger->info('Fetch Transaction Data: ' . json_encode($data));
-            $this->_logger->info('Fetch Transaction Result: ' . json_encode($result));
+            $this->_logger->info('Fetch Transaction Result: ' . json_encode($responseBody));
         }
 
-        return $result;
+        return $responseBody;
     }
 
     /**
@@ -256,6 +294,7 @@ class Data extends AbstractHelper
      *
      * @param Order $order
      * @param array $resp
+     *
      * @return bool
      * @throws Exception
      */
@@ -277,7 +316,7 @@ class Data extends AbstractHelper
                 $status = Order::STATE_CANCELED;
                 $order->setStatus($status);
                 $order->setState($status);
-                $order->save();
+                $this->orderRepository->save($order);
 
                 return false;
             }
@@ -298,7 +337,7 @@ class Data extends AbstractHelper
 
                     $order->setStatus($status);
                     $order->setState($status);
-                    $order->save();
+                    $this->orderRepository->save($order);
 
                     $response = true;
                 } catch (Exception $ex) {
@@ -308,7 +347,7 @@ class Data extends AbstractHelper
                 $status = Order::STATE_CANCELED;
                 $order->setStatus($status);
                 $order->setState($status);
-                $order->save();
+                $this->orderRepository->save($order);
             }
         }
 
@@ -319,6 +358,7 @@ class Data extends AbstractHelper
      * Restores the order
      *
      * @param Order $order
+     *
      * @return void
      * @throws Exception
      */
@@ -326,7 +366,8 @@ class Data extends AbstractHelper
     {
         $orderItems = $order->getAllItems();
         foreach ($orderItems as $item) {
-            $item->setData("qty_canceled", 0)->save();
+            $item->setData("qty_canceled", 0);
+            $this->orderItemRepository->save($item);
         }
     }
 
@@ -334,21 +375,45 @@ class Data extends AbstractHelper
      * Generates the invoice
      *
      * @param Order $order
+     *
      * @return void
      * @throws LocalizedException
      */
     public function generateInvoice(Order $order): void
     {
+        $this->_sendOrderEmail($order);
+
+        // Capture invoice when payment is successful
+        $this->_createAndCaptureInvoice($order);
+    }
+
+    private function _sendOrderEmail(Order $order): void
+    {
         $order_successful_email = $this->getConfigData('order_email');
 
         if ($order_successful_email != '0') {
             $this->OrderSender->send($order);
-            $order->addStatusHistoryComment(
+            // Add status history comment
+            $history = $order->addCommentToStatusHistory(
                 __('Notified customer about order #%1.', $order->getId())
-            )->setIsCustomerNotified(true)->save();
-        }
+            );
+            $history->setIsCustomerNotified(true);
 
-        // Capture invoice when payment is successful
+            try {
+                // Save the status history
+                $this->orderStatusHistoryRepository->save($history);
+
+                // Save the order
+                $this->orderRepository->save($order);
+            } catch (LocalizedException $e) {
+                // Handle any exceptions during the save process
+                $this->_logger->error('Order save error: ' . $e->getMessage());
+            }
+        }
+    }
+
+    private function _createAndCaptureInvoice(Order $order): void
+    {
         $invoice = $this->_invoiceService->prepareInvoice($order);
         $invoice->setRequestedCaptureCase(Invoice::CAPTURE_ONLINE);
         $invoice->register();
@@ -364,9 +429,18 @@ class Data extends AbstractHelper
         $send_invoice_email = $this->getConfigData('invoice_email');
         if ($send_invoice_email != '0') {
             $this->invoiceSender->send($invoice);
-            $order->addStatusHistoryComment(
-                __('Notified customer about invoice #%1.', $invoice->getId())
-            )->setIsCustomerNotified(true)->save();
+            // Create a status history comment
+            $history = $this->historyFactory->create()
+                                            ->setStatus($order->getStatus())
+                                            ->setEntityName('order')
+                                            ->setComment(__('Notified customer about invoice #%1.', $invoice->getId()))
+                                            ->setIsCustomerNotified(true);
+
+            // Add the history to the order
+            $order->addStatusHistory($history);
+
+            // Save the order using the repository
+            $this->orderRepository->save($order);
         }
     }
 
@@ -375,6 +449,7 @@ class Data extends AbstractHelper
      *
      * @param Order|null $order
      * @param array $paymentData
+     *
      * @return string
      */
     public function createTransaction(Order $order = null, array $paymentData = []): string
@@ -384,10 +459,10 @@ class Data extends AbstractHelper
             // Get payment object from order object
             $payment = $order->getPayment();
             $payment->setLastTransId($paymentData['PAY_REQUEST_ID'])
-                ->setTransactionId($paymentData['PAY_REQUEST_ID'])
-                ->setAdditionalInformation(
-                    [Transaction::RAW_DETAILS => (array)$paymentData]
-                );
+                    ->setTransactionId($paymentData['PAY_REQUEST_ID'])
+                    ->setAdditionalInformation(
+                        [Transaction::RAW_DETAILS => (array)$paymentData]
+                    );
             $formattedPrice = $order->getBaseCurrency()->formatTxt(
                 $order->getGrandTotal()
             );
@@ -396,24 +471,23 @@ class Data extends AbstractHelper
             // Get the object of builder class
             $trans       = $this->_transactionBuilder;
             $transaction = $trans->setPayment($payment)
-                ->setOrder($order)
-                ->setTransactionId($paymentData['PAY_REQUEST_ID'])
-                ->setAdditionalInformation(
-                    [Transaction::RAW_DETAILS => $paymentData]
-                )
-                ->setFailSafe(true)
+                                 ->setOrder($order)
+                                 ->setTransactionId($paymentData['PAY_REQUEST_ID'])
+                                 ->setAdditionalInformation(
+                                     [Transaction::RAW_DETAILS => $paymentData]
+                                 )
+                                 ->setFailSafe(true)
                 // Build method creates the transaction and returns the object
-                ->build(Transaction::TYPE_CAPTURE);
+                                 ->build(Transaction::TYPE_CAPTURE);
 
             $payment->addTransactionCommentsToOrder(
                 $transaction,
                 $message
             );
             $payment->setParentTransactionId(null);
-            $payment->save();
-            $order->save();
+            $this->orderRepository->save($order);
 
-            $response = $transaction->save()->getTransactionId();
+            $response = $transaction->getTransactionId();
         } catch (Exception $e) {
             $this->_logger->error($e->getMessage());
         }

@@ -1,11 +1,4 @@
 <?php
-/**
- * @noinspection PhpUndefinedNamespaceInspection
- */
-
-/**
- * @noinspection PhpMissingFieldTypeInspection
- */
 
 /**
  * @noinspection PhpUnused
@@ -36,7 +29,7 @@ use Magento\Framework\DB\Transaction;
 use Magento\Framework\DB\TransactionFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\HTTP\Client\Curl;
+use GuzzleHttp\Client;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Framework\Session\Generic;
@@ -45,6 +38,7 @@ use Magento\Framework\Url\Helper\Data;
 use Magento\Framework\UrlInterface;
 use Magento\Framework\View\Result\PageFactory;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Api\OrderStatusHistoryRepositoryInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
@@ -96,9 +90,9 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
     private Order $orderModel;
 
     /**
-     * @var Curl
+     * @var Client
      */
-    private Curl $curl;
+    protected Client $httpClient;
 
     /**
      * @var ResultFactory
@@ -132,6 +126,10 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
      * @var string
      */
     private string $enableLogging;
+    /**
+     * @var OrderStatusHistoryRepositoryInterface
+     */
+    private OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository;
 
     /**
      * @param PageFactory $pageFactory
@@ -156,7 +154,7 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
      * @param Order $orderModel
      * @param ScopeConfigInterface $scopeConfigInterface
      * @param Transaction $transactionModel
-     * @param Curl $curl
+     * @param Client $httpClient
      * @param ObjectManagerInterface $objectManager
      * @param Uri $uriHandler
      * @param Request $request
@@ -164,6 +162,7 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
      * @param ResultFactory $resultFactory
      * @param CustomerRepositoryInterface $customerRepository
      * @param PayGateConfig $paygateconfig
+     * @param OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository
      */
     public function __construct(
         PageFactory $pageFactory,
@@ -188,26 +187,28 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
         Order $orderModel,
         ScopeConfigInterface $scopeConfigInterface,
         Transaction $transactionModel,
-        Curl $curl,
+        Client $httpClient,
         ObjectManagerInterface $objectManager,
         Uri $uriHandler,
         Request $request,
         ManagerInterface $messageManager,
         ResultFactory $resultFactory,
         CustomerRepositoryInterface $customerRepository,
-        PayGateConfig $paygateconfig
+        PayGateConfig $paygateconfig,
+        OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository
     ) {
-        $this->orderModel           = $orderModel;
-        $this->scopeConfigInterface = $scopeConfigInterface;
-        $this->transactionModel     = $transactionModel;
-        $this->curl                 = $curl;
-        $this->uriHandler           = $uriHandler;
-        $this->resultFactory        = $resultFactory;
-        $this->customerUrl          = $customerUrl;
-        $this->customerSession      = $customerSession;
-        $this->customerRepository   = $customerRepository;
-        $this->_paygateconfig = $paygateconfig;
-        $this->enableLogging = $this->_paygateconfig->getEnableLogging();
+        $this->orderModel                   = $orderModel;
+        $this->scopeConfigInterface         = $scopeConfigInterface;
+        $this->transactionModel             = $transactionModel;
+        $this->httpClient                   = $httpClient;
+        $this->uriHandler                   = $uriHandler;
+        $this->resultFactory                = $resultFactory;
+        $this->customerUrl                  = $customerUrl;
+        $this->customerSession              = $customerSession;
+        $this->customerRepository           = $customerRepository;
+        $this->_paygateconfig               = $paygateconfig;
+        $this->enableLogging                = $this->_paygateconfig->getEnableLogging();
+        $this->orderStatusHistoryRepository = $orderStatusHistoryRepository;
 
         parent::__construct(
             $pageFactory,
@@ -245,22 +246,22 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
     {
         $pre = __METHOD__ . " : ";
         $this->_logger->debug($pre . 'bof');
-        $data = $this->request->getPostValue();
+        $data         = $this->request->getPostValue();
         $this->_order = $this->_checkoutSession->getLastRealOrder();
-        $order = $this->_order;
+        $order        = $this->_order;
 
         $resultRedirectFactory = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
 
-        if (! $this->_order->getId()) {
+        if (!$this->_order->getId()) {
             $this->setlastOrderDetails();
             $order = $this->_order;
         }
 
-        $cartPath = 'checkout/cart/';
+        $cartPath    = 'checkout/cart/';
         $successPath = 'checkout/onepage/success/';
 
-        if (! ($this->_order->getId()) || ! isset($data['PAY_REQUEST_ID'])) {
-            $resultRedirect =  $resultRedirectFactory->setPath($cartPath);
+        if (!($this->_order->getId()) || !isset($data['PAY_REQUEST_ID'])) {
+            $resultRedirect = $resultRedirectFactory->setPath($cartPath);
         } else {
             try {
                 $this->notify($data);
@@ -270,36 +271,35 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
 
             $this->pageFactory->create();
             try {
-                $order = $this->orderRepository->get($order->getId());
                 $objectManager = ObjectManager::getInstance();
 
                 $customerId = $order->getCustomerId();
 
                 if ($customerId !== null) {
                     $customerData = $objectManager->create(Customer::class)
-                        ->load($customerId);
+                                                  ->load($customerId);
 
                     $this->customerSession->setCustomerAsLoggedIn($customerData);
                 }
 
                 //Get Payment
-                $payment = $order->getPayment();
+                $payment           = $order->getPayment();
                 $paymentMethodType = $payment->getAdditionalInformation()
-                ['raw_details_info']["PAYMENT_METHOD_TYPE"] ?? "0";
+                                     ['raw_details_info']["PAYMENT_METHOD_TYPE"] ?? "0";
 
                 $paygateId     = $this->_paymentMethod->getPaygateId();
                 $encryptionKey = $this->_paymentMethod->getEncryptionKey();
 
-                $pay_request_id        = $data['PAY_REQUEST_ID'];
-                $status                = $data['TRANSACTION_STATUS'] ?? "";
-                $reference             = $order->getRealOrderId();
-                $checksum              = $data['CHECKSUM'] ?? "";
-                $data['PAYMENT_TITLE'] = "PAYGATE_PAYWEB";
+                $pay_request_id              = $data['PAY_REQUEST_ID'];
+                $status                      = $data['TRANSACTION_STATUS'] ?? "";
+                $reference                   = $order->getRealOrderId();
+                $checksum                    = $data['CHECKSUM'] ?? "";
+                $data['PAYMENT_TITLE']       = "PAYGATE_PAYWEB";
                 $data["PAYMENT_METHOD_TYPE"] = $paymentMethodType;
 
                 $checksum_source = $paygateId . $pay_request_id . $status . $reference . $encryptionKey;
                 //@codingStandardsIgnoreStart
-                $test_checksum   = md5($checksum_source);
+                $test_checksum = md5($checksum_source);
                 //@codingStandardsIgnoreEnd
 
                 $validateChecksum = hash_equals($checksum, $test_checksum);
@@ -319,7 +319,7 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
                 $this->createTransaction($order, $data);
                 $this->_logger->error($pre . $e->getMessage());
                 $this->messageManager->addExceptionMessage($e, __('We can\'t start Paygate Checkout.'));
-                $resultRedirect =  $resultRedirectFactory->setPath($cartPath);
+                $resultRedirect = $resultRedirectFactory->setPath($cartPath);
             }
         }
 
@@ -332,6 +332,7 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
      * @param OrderInterface $order
      * @param int $status
      * @param array $data
+     *
      * @return bool
      * @throws LocalizedException
      */
@@ -340,8 +341,8 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
         $success = false;
 
         $canProcessThisOrder = $this->_paymentMethod->getConfigData(
-            'ipn_method'
-        ) != '0' && $order->getPaywebPaymentProcessed() != 1;
+                'ipn_method'
+            ) != '0' && $order->getPaywebPaymentProcessed() != 1;
 
         switch ($status) {
             case 1:
@@ -362,9 +363,22 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
 
                     if ($order_successful_email != '0') {
                         $this->OrderSender->send($order);
-                        $order->addStatusHistoryComment(
+                        // Add status history comment
+                        $history = $order->addCommentToStatusHistory(
                             __('Notified customer about order #%1.', $order->getId())
-                        )->setIsCustomerNotified(true)->save();
+                        );
+                        $history->setIsCustomerNotified(true);
+
+                        try {
+                            // Save the status history
+                            $this->orderStatusHistoryRepository->save($history);
+
+                            // Save the order
+                            $this->orderRepository->save($order);
+                        } catch (LocalizedException $e) {
+                            // Handle any exceptions during the save process
+                            $this->_logger->error('Order save error: ' . $e->getMessage());
+                        }
                     }
 
                     // Capture invoice when payment is successful
@@ -383,14 +397,29 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
                     $send_invoice_email = $this->getConfigData('invoice_email');
                     if ($send_invoice_email != '0') {
                         $this->invoiceSender->send($invoice);
-                        $order->addStatusHistoryComment(
-                            __('Notified customer about invoice #%1.', $invoice->getId())
-                        )->setIsCustomerNotified(true)->save();
+                        // Add status history comment
+                        $history = $order->addCommentToStatusHistory(
+                            __('Notified customer about order #%1.', $order->getId())
+                        );
+                        $history->setIsCustomerNotified(true);
+
+                        try {
+                            // Save the status history
+                            $this->orderStatusHistoryRepository->save($history);
+
+                            // Save the order
+                            $this->orderRepository->save($order);
+                        } catch (LocalizedException $e) {
+                            // Handle any exceptions during the save process
+                            $this->_logger->error('Order save error: ' . $e->getMessage());
+                        }
                     }
 
                     // Save Transaction Response
                     $this->createTransaction($order, $data);
-                    $order->setState($state)->setStatus($status)->save();
+                    $order->setState($state)->setStatus($status);
+                    $this->orderRepository->save($order);
+
                     if ($this->enableLogging === '1') {
                         $this->_logger->info('Order #' . $order->getId() . ' Saved @ Success.php');
                     }
@@ -405,7 +434,15 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
                 if ($canProcessThisOrder) {
                     $order->setPaywebPaymentProcessed(1)->save();
                     $this->createTransaction($order, $data);
-                    $order->cancel()->save();
+                    $order->cancel();
+                    $history = $order->addCommentToStatusHistory(
+                        __(
+                            'Redirect Response, update order.'
+                        )
+                    );
+                    $this->orderStatusHistoryRepository->save($history);
+                    $this->orderRepository->save($order);
+
                     if ($this->enableLogging === '1') {
                         $this->_logger->info('Order #' . $order->getId() . ' Declined @ Success.php');
                     }
@@ -417,13 +454,22 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
                 if ($canProcessThisOrder) {
                     $order->setPaywebPaymentProcessed(1)->save();
                     $this->createTransaction($order, $data);
-                    $order->cancel()->save();
+                    $order->cancel();
+                    $history = $order->addCommentToStatusHistory(
+                        __(
+                            'Redirect Response, update order.'
+                        )
+                    );
+                    $this->orderStatusHistoryRepository->save($history);
+                    $this->orderRepository->save($order);
+
                     if ($this->enableLogging === '1') {
                         $this->_logger->info('Order #' . $order->getId() . ' Cancelled @ Success.php');
                     }
                 }
                 break;
         }
+
         return $success;
     }
 
@@ -431,11 +477,12 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
      * Notify Paygate
      *
      * @param array $data
+     *
      * @return void
      */
     public function notify(array $data): void
     {
-        $order    = $this->_order;
+        $order = $this->_order;
 
         $paygateId     = $this->_paymentMethod->getPaygateId();
         $encryptionKey = $this->_paymentMethod->getEncryptionKey();
@@ -451,19 +498,24 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
         //@codingStandardsIgnoreEnd
 
         $data['CHECKSUM'] = $checksum;
-
-        $fieldsString = http_build_query($data);
+        $fieldsString     = http_build_query($data);
 
         // Open connection
-        $this->curl->post('https://secure.paygate.co.za/payweb3/query.trans', $fieldsString);
+        $response = $this->httpClient->post('https://secure.paygate.co.za/payweb3/query.trans', [
+            'headers' => [
+                'Content-Type' => 'application/x-www-form-urlencoded',
+            ],
+            'body'    => $fieldsString,
+        ]);
 
-        $this->uriHandler->setQuery($this->curl->getBody());
+        $responseBody = $response->getBody()->getContents();
+        $this->uriHandler->setQuery($responseBody);
 
-        $response = $this->uriHandler->getQueryAsArray();
+        $responseArray = $this->uriHandler->getQueryAsArray();
 
-        if (isset($response['VAULT_ID'])) {
+        if (isset($responseArray['VAULT_ID'])) {
             $model = $this->_paymentMethod;
-            $model->saveVaultData($order, $response);
+            $model->saveVaultData($order, $responseArray);
         }
     }
 
@@ -471,6 +523,7 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
      * Gets order by increment ID
      *
      * @param int $incrementId
+     *
      * @return Order
      */
     public function getOrderByIncrementId(int $incrementId): Order

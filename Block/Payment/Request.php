@@ -1,14 +1,7 @@
 <?php
-/**
- * @noinspection PhpMissingFieldTypeInspection
- */
 
 /**
  * @noinspection PhpUnused
- */
-
-/**
- * @noinspection PhpUndefinedNamespaceInspection
  */
 
 /**
@@ -63,13 +56,13 @@ class Request extends Template
     protected $_isScopePrivate;
 
     /**
-     * @param Context      $context
+     * @param Context $context
      * @param OrderFactory $orderFactory
-     * @param Session      $checkoutSession
-     * @param ReadFactory  $readFactory
-     * @param Reader       $reader
-     * @param PayGate      $paymentMethod
-     * @param array        $data
+     * @param Session $checkoutSession
+     * @param ReadFactory $readFactory
+     * @param Reader $reader
+     * @param PayGate $paymentMethod
+     * @param array $data
      *
      * @noinspection PhpUnused
      */
@@ -100,14 +93,14 @@ class Request extends Template
     public function _prepareLayout()
     {
         $this->setMessage('Redirecting to Paygate')
-            ->setId('paygate_checkout')
-            ->setName('paygate_checkout')
-            ->setFormMethod('POST')
-            ->setFormAction('https://secure.paygate.co.za/payweb3/process.trans')
-            ->setFormData($this->_paymentMethod->getStandardCheckoutFormFields())
-            ->setSubmitForm(
-                '<script type="text/javascript">document.getElementById( "paygate_checkout" ).submit();</script>'
-            );
+             ->setId('paygate_checkout')
+             ->setName('paygate_checkout')
+             ->setFormMethod('POST')
+             ->setFormAction('https://secure.paygate.co.za/payweb3/process.trans')
+             ->setFormData($this->_paymentMethod->getStandardCheckoutFormFields())
+             ->setSubmitForm(
+                 '<script type="text/javascript">document.getElementById( "paygate_checkout" ).submit();</script>'
+             );
 
         return parent::_prepareLayout();
     }

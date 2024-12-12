@@ -1,7 +1,4 @@
 <?php
-/**
- * @noinspection PhpUndefinedNamespaceInspection
- */
 
 /**
  * @noinspection PhpUnused
@@ -30,7 +27,9 @@ use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\Framework\Url\Helper\Data;
 use Magento\Framework\UrlInterface;
 use Magento\Framework\View\Result\PageFactory;
+use Magento\Sales\Api\Data\OrderStatusHistoryInterfaceFactory;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Api\OrderStatusHistoryRepositoryInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
@@ -68,6 +67,14 @@ class Index extends AbstractPaygate
      * @var EncryptorInterface
      */
     protected $encryptor;
+    /**
+     * @var OrderStatusHistoryRepositoryInterface
+     */
+    private OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository;
+    /**
+     * @var OrderStatusHistoryInterfaceFactory
+     */
+    private OrderStatusHistoryInterfaceFactory $historyFactory;
 
     /**
      * @param PageFactory $pageFactory
@@ -97,6 +104,8 @@ class Index extends AbstractPaygate
      * @param ResponseInterface $responseInterface
      * @param PayGateConfig $paygateconfig
      * @param EncryptorInterface $encryptor
+     * @param OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository
+     * @param OrderStatusHistoryInterfaceFactory $historyFactory
      */
     public function __construct(
         PageFactory $pageFactory,
@@ -124,13 +133,17 @@ class Index extends AbstractPaygate
         ManagerInterface $messageManager,
         ResultFactory $resultFactory,
         PayGateConfig $paygateconfig,
-        EncryptorInterface $encryptor
+        EncryptorInterface $encryptor,
+        OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository,
+        OrderStatusHistoryInterfaceFactory $historyFactory
     ) {
-        $this->transactionModel = $transactionModel;
-        $this->resultFactory = $resultFactory;
-        $this->_paygateconfig = $paygateconfig;
-        $this->enableLogging = $this->_paygateconfig->getEnableLogging();
-        $this->encryptor = $encryptor;
+        $this->transactionModel             = $transactionModel;
+        $this->resultFactory                = $resultFactory;
+        $this->_paygateconfig               = $paygateconfig;
+        $this->enableLogging                = $this->_paygateconfig->getEnableLogging();
+        $this->encryptor                    = $encryptor;
+        $this->orderStatusHistoryRepository = $orderStatusHistoryRepository;
+        $this->historyFactory               = $historyFactory;
 
         parent::__construct(
             $pageFactory,
@@ -156,7 +169,9 @@ class Index extends AbstractPaygate
             $request,
             $messageManager,
             $resultFactory,
-            $encryptor
+            $encryptor,
+            $orderStatusHistoryRepository,
+            $historyFactory
         );
     }
 
@@ -182,7 +197,7 @@ class Index extends AbstractPaygate
 
         // Verify security signature
         $checkSumParams = '';
-        if (! $errors) {
+        if (!$errors) {
             foreach ($paygate_data as $key => $val) {
                 $notify_data[$key] = $val;
 
@@ -228,7 +243,7 @@ class Index extends AbstractPaygate
         }
 
         // Verify security signature
-        if (! $errors) {
+        if (!$errors) {
             //@codingStandardsIgnoreStart
             $checkSumParams = md5($checkSumParams);
             //@codingStandardsIgnoreEnd
@@ -239,15 +254,15 @@ class Index extends AbstractPaygate
 
         $paygate_data['PAYMENT_TITLE'] = "PAYGATE_PAYWEB";
 
-        if (! $errors && isset($paygate_data['TRANSACTION_STATUS']) && $this->_paymentMethod->getConfigData(
-            'ipn_method'
-        ) == '0'
+        if (!$errors && isset($paygate_data['TRANSACTION_STATUS']) && $this->_paymentMethod->getConfigData(
+                'ipn_method'
+            ) == '0'
         ) {
             // Prepare PayGate Data
             $status = filter_var($paygate_data['TRANSACTION_STATUS'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $orderId = $this->request->getParam('eid');
-            $order   = $this->orderRepository->get($orderId);
+            $order   = $this->orderRepository->get((int)$orderId);
 
             if ($order->getPaywebPaymentProcessed() == 1) {
                 $this->_logger->debug('IPN ORDER ALREADY BEING PROCESSED');
@@ -275,6 +290,7 @@ class Index extends AbstractPaygate
      * @param Order $order
      * @param int $status
      * @param array $paygate_data
+     *
      * @return bool
      * @throws LocalizedException
      */
@@ -293,44 +309,23 @@ class Index extends AbstractPaygate
                         $status = $this->getConfigData('successful_order_status');
                     }
 
-                    if ($this->getConfigData('successful_order_state') != '') {
+                    if ($this->getConfigData('successful_order_state') != "") {
                         $state = $this->getConfigData('successful_order_state');
                     }
 
-                    $model                  = $this->_paymentMethod;
-                    $order_successful_email = $model->getConfigData('order_email');
-
-                    if ($order_successful_email != '0') {
-                        $this->OrderSender->send($order);
-                        $order->addStatusHistoryComment(
-                            __('Notified customer about order #%1.', $order->getId())
-                        )->setIsCustomerNotified(true)->save();
+                    if ($this->_sendOrderEmail($order)) {
+                        // Optionally, handle the comment logging for order notification
                     }
 
-                    // Capture invoice when payment is successful
-                    $invoice = $this->_invoiceService->prepareInvoice($order);
-                    $invoice->setRequestedCaptureCase(Invoice::CAPTURE_ONLINE);
-                    $invoice->register();
+                    $invoice = $this->_createAndCaptureInvoice($order);
 
-                    // Save the invoice to the order
-                    $transaction = $this->transactionModel
-                        ->addObject($invoice)
-                        ->addObject($invoice->getOrder());
-
-                    $transaction->save();
-
-                    // Magento\Sales\Model\Order\Email\Sender\InvoiceSender
-                    $send_invoice_email = $model->getConfigData('invoice_email');
-                    if ($send_invoice_email != '0') {
-                        $this->invoiceSender->send($invoice);
-                        $order->addStatusHistoryComment(
-                            __('Notified customer about invoice #%1.', $invoice->getId())
-                        )->setIsCustomerNotified(true)->save();
+                    if ($this->_sendInvoiceEmail($invoice, $order)) {
+                        // Optionally, handle the comment logging for invoice notification
                     }
 
-                    // Save Transaction Response
                     $this->createTransaction($order, $paygate_data);
-                    $order->setState($state)->setStatus($status)->save();
+                    $order->setState($state)->setStatus($status);
+                    $this->orderRepository->save($order);
 
                     if ($this->enableLogging === '1') {
                         $this->_logger->info('Order #' . $order->getId() . ' Saved @ Notify.php');
@@ -338,16 +333,97 @@ class Index extends AbstractPaygate
 
                     $success = true;
                 }
+                break;
 
-                // no break
+            // no break
             case 0:
             default:
+                $this->_checkoutSession->restoreQuote();
+                $order->setPaywebPaymentProcessed(1)->save();
                 // Save Transaction Response
                 $this->createTransaction($order, $paygate_data);
-                $order->cancel()->save();
+                $order->cancel();
+                $history = $order->addCommentToStatusHistory(
+                    __(
+                        'Notify Response, update order.'
+                    )
+                );
+                $this->orderStatusHistoryRepository->save($history);
+                $this->orderRepository->save($order);
+                break;
         }
+
         return $success;
     }
+
+    private function _sendOrderEmail(Order $order): bool
+    {
+        $order_successful_email = $this->_paymentMethod->getConfigData('order_email');
+        if ($order_successful_email != '0') {
+            $this->OrderSender->send($order);
+            // Add status history comment
+            $history = $order->addCommentToStatusHistory(
+                __('Notified customer about order #%1.', $order->getId())
+            );
+            $history->setIsCustomerNotified(true);
+
+            try {
+                // Save the status history
+                $this->orderStatusHistoryRepository->save($history);
+
+                // Save the order
+                $this->orderRepository->save($order);
+            } catch (LocalizedException $e) {
+                // Handle any exceptions during the save process
+                $this->_logger->error('Order save error: ' . $e->getMessage());
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private function _createAndCaptureInvoice(Order $order)
+    {
+        $invoice = $this->_invoiceService->prepareInvoice($order);
+        $invoice->setRequestedCaptureCase(Invoice::CAPTURE_ONLINE);
+        $invoice->register();
+
+        // Save the invoice to the order
+        $transaction = $this->transactionModel
+            ->addObject($invoice)
+            ->addObject($invoice->getOrder());
+
+        $transaction->save();
+
+        return $invoice;
+    }
+
+    private function _sendInvoiceEmail($invoice, Order $order): bool
+    {
+        $send_invoice_email = $this->_paymentMethod->getConfigData('invoice_email');
+        if ($send_invoice_email != '0') {
+            $this->invoiceSender->send($invoice);
+            // Create a status history comment
+            $history = $this->historyFactory->create()
+                                            ->setStatus($order->getStatus())
+                                            ->setEntityName('order')
+                                            ->setComment(__('Notified customer about invoice #%1.', $invoice->getId()))
+                                            ->setIsCustomerNotified(true);
+
+            // Add the history to the order
+            $order->addStatusHistory($history);
+
+            // Save the order using the repository
+            $this->orderRepository->save($order);
+
+            return true;
+        }
+
+        return false;
+    }
+
 
     // Retrieve post data
 
@@ -367,7 +443,7 @@ class Index extends AbstractPaygate
         }
 
         // Return "false" if no data was received
-        if (empty($nData) || ! isset($nData['CHECKSUM'])) {
+        if (empty($nData) || !isset($nData['CHECKSUM'])) {
             return (false);
         } else {
             return ($nData);
@@ -391,11 +467,22 @@ class Index extends AbstractPaygate
          */
         $transaction = $this->_transactionFactory->create();
         $transaction->addObject($invoice)
-            ->addObject($invoice->getOrder())
-            ->save();
+                    ->addObject($invoice->getOrder())
+                    ->save();
 
-        $this->_order->addStatusHistoryComment(__('Notified customer about invoice #%1.', $invoice->getIncrementId()));
-        $this->_order->setIsCustomerNotified(true);
-        $this->_order->save();
+        // Add status history comment
+        // Create new status history entry
+        $statusHistory = $this->historyFactory->create();
+        $statusHistory->setOrder($this->_order)
+                      ->setStatus($this->_order->getStatus())
+                      ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
+                      ->setComment(__('Notified customer about invoice #%1.', $invoice->getIncrementId()))
+                      ->setIsCustomerNotified(true);
+
+        // Save status history using repository
+        $this->orderStatusHistoryRepository->save($statusHistory);
+
+        // Save the order using the repository
+        $this->orderRepository->save($this->_order);
     }
 }

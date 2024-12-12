@@ -16,7 +16,7 @@
         foreach ($block->getPostData() as $key => $value): ?>
             <input type="hidden" name="<?= $block->escapeHtml($key); ?>"
                    value="<?= $block->escapeHtml($value); ?>">
-            <?php
+        <?php
 
         endforeach; ?>
         <button type="submit">Pay</button>

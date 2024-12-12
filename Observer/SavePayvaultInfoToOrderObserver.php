@@ -1,7 +1,4 @@
 <?php
-/**
- * @noinspection PhpUndefinedNamespaceInspection
- */
 
 /**
  * @noinspection PhpUnused
@@ -32,14 +29,13 @@ class SavePayvaultInfoToOrderObserver extends AbstractDataAssignObserver
      * @param Observer $observer
      *
      * @return void
-     * @noinspection PhpUndefinedMethodInspection
      */
     public function execute(Observer $observer)
     {
         $data = $this->readDataArgument($observer);
 
         $additionalData = $data->getData(PaymentInterface::KEY_ADDITIONAL_DATA);
-        if (! is_array($additionalData) || ! isset($additionalData[self::PAYVAULT_NAME_INDEX])) {
+        if (!is_array($additionalData) || !isset($additionalData[self::PAYVAULT_NAME_INDEX])) {
             return;
         }
 
