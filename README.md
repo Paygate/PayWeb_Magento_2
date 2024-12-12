@@ -20,7 +20,7 @@ support@payfast.help should you require any assistance.
         - Extract the contents of `PayGate.zip`, then upload the newly created **PayGate** directory into your Magento
           app/code directory (e.g. magentorootfolder/app/code/).
 
-3. **Install the Plugin**
+2. **Install the Plugin**
 
     - Run the following Magento CLI commands:
       ```console
@@ -31,7 +31,7 @@ support@payfast.help should you require any assistance.
       php bin/magento indexer:reindex
       php bin/magento cache:clean
       ```
-4. **Configure the Plugin**
+3. **Configure the Plugin**
 
     - Login to the Magento admin panel.
     - Navigate to **Stores > Configuration > Sales > Payment Methods** and click on
