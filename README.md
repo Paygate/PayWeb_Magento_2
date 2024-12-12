@@ -24,14 +24,14 @@ support@payfast.help should you require any assistance.
 
     - **Enable Module**
         - Run the following Magento CLI commands:
-           ```console
-           php bin/magento module:enable PayGate_PayWeb
-           php bin/magento setup:upgrade
-           php bin/magento setup:di:compile
-           php bin/magento setup:static-content:deploy
-           php bin/magento indexer:reindex
-           php bin/magento cache:clean
-           ```
+        ```console
+        php bin/magento module:enable PayGate_PayWeb
+        php bin/magento setup:upgrade
+        php bin/magento setup:di:compile
+        php bin/magento setup:static-content:deploy
+        php bin/magento indexer:reindex
+        php bin/magento cache:clean
+        ```
 3. **Configure the Plugin**
 
     - Login to the Magento admin panel.
