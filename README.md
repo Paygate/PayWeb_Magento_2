@@ -16,7 +16,7 @@ support@payfast.help should you require any assistance.
         ```
     - **Option 2: Manual Installation**
         - Visit the [releases page](https://github.com/Paygate/PayWeb_Magento_2/releases) and
-          download [PayGate.zip](https://github.com/Paygate/PayHost_Magento_2/releases/download/v1.1.0/PayGate.zip).
+          download [PayGate.zip](https://github.com/Paygate/PayWeb_Magento_2/releases/download/v2.6.0/PayGate.zip).
         - Extract the contents of `PayGate.zip`, then upload the newly created **PayGate** directory into your Magento
           app/code directory (e.g. magentorootfolder/app/code/).
 
