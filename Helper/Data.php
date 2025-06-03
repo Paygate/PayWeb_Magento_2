@@ -12,7 +12,7 @@
  */
 
 /**
- * Copyright (c) 2024 Payfast (Pty) Ltd
+ * Copyright (c) 2025 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -45,7 +45,6 @@ use Magento\Payment\Api\PaymentMethodListInterface;
 use Magento\Sales\Api\OrderItemRepositoryInterface;
 use Magento\Sales\Api\OrderStatusHistoryRepositoryInterface;
 use Magento\Sales\Api\Data\OrderStatusHistoryInterfaceFactory;
-
 
 /**
  * PayGate Data helper

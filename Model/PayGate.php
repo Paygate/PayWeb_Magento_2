@@ -21,7 +21,7 @@
  */
 
 /**
- * Copyright (c) 2024 Payfast (Pty) Ltd
+ * Copyright (c) 2025 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -530,6 +530,11 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
             $fields['VAULT'] = 1;
         }
 
+        if (isset($fields['VAULT_ID']) && isset($fields['PAY_METHOD'])) {
+            unset($fields['PAY_METHOD']);
+            unset($fields['PAY_METHOD_DETAIL']);
+        }
+
         //@codingStandardsIgnoreStart
         $fields['CHECKSUM'] = md5(implode('', $fields) . $encryptionKey);
         //@codingStandardsIgnoreEnd
@@ -613,9 +618,9 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
             'AMOUNT'           => $price,
             'CURRENCY'         => $currency,
             'RETURN_URL'       => $this->_urlBuilder->getUrl(
-                    'paygate/redirect/success',
-                    [self::SECURE => true]
-                ) . '?form_key=' . $formKey . '&gid=' . $reference,
+                'paygate/redirect/success',
+                [self::SECURE => true]
+            ) . '?form_key=' . $formKey . '&gid=' . $reference,
             'TRANSACTION_DATE' => $DateTime->format('Y-m-d H:i:s'),
             'LOCALE'           => 'en-za',
             'COUNTRY'          => $country_code3,
@@ -628,10 +633,10 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
         }
 
         $fields['NOTIFY_URL'] = $this->_urlBuilder->getUrl(
-                'paygate/notify',
-                ['_secure' => true]
-            ) . '?eid=' . $orderID;
-        $fields['USER3']      = 'magento2-v2.6.0';
+            'paygate/notify',
+            ['_secure' => true]
+        ) . '?eid=' . $orderID;
+        $fields['USER3']      = 'magento2-v2.6.1';
 
         return $fields;
     }
@@ -998,7 +1003,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
         $paymentToken->getTokenDetails();
 
         $hashKey .= $paymentToken->getPaymentMethodCode() . $paymentToken->getType() . $paymentToken->getGatewayToken(
-            ) . $paymentToken->getTokenDetails();
+        ) . $paymentToken->getTokenDetails();
 
         return $this->encryptor->getHash($hashKey);
     }

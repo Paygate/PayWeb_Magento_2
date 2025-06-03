@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2024 Payfast (Pty) Ltd
+ * Copyright (c) 2025 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -12,10 +12,10 @@
 /** @noinspection PhpUndefinedVariableInspection */
 if ($instructions = $block->getMethod()->getInstructions()): ?>
     <div class="items <?=
-    $block->escapeHtml($block->getMethodCode()) ?> instructions agreement content" id="payment_form_<?=
-    $block->escapeHtml($block->getMethodCode()) ?>" style="display: none;">
+    $escaper->escapeHtml($block->getMethodCode()) ?> instructions agreement content" id="payment_form_<?=
+    $escaper->escapeHtml($block->getMethodCode()) ?>" style="display: none;">
         <?=
-        $block->escapeHtml(nl2br($instructions)) ?>
+        $escaper->escapeHtml(nl2br($instructions)) ?>
     </div>
-<?php
+    <?php
 endif; ?>
