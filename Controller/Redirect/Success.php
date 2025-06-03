@@ -9,7 +9,7 @@
  */
 
 /*
- * Copyright (c) 2024 Payfast (Pty) Ltd
+ * Copyright (c) 2025 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -147,7 +147,7 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
      * @param UrlInterface $urlBuilder
      * @param OrderRepositoryInterface $orderRepository
      * @param StoreManagerInterface $storeManager
-     * @param OrderSender $OrderSender
+     * @param OrderSender $orderSender
      * @param DateTime $date
      * @param CollectionFactory $orderCollectionFactory
      * @param Builder $_transactionBuilder
@@ -180,7 +180,7 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
         UrlInterface $urlBuilder,
         OrderRepositoryInterface $orderRepository,
         StoreManagerInterface $storeManager,
-        OrderSender $OrderSender,
+        OrderSender $orderSender,
         DateTime $date,
         CollectionFactory $orderCollectionFactory,
         Builder $_transactionBuilder,
@@ -226,7 +226,7 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
             $urlBuilder,
             $orderRepository,
             $storeManager,
-            $OrderSender,
+            $orderSender,
             $date,
             $orderCollectionFactory,
             $_transactionBuilder,
@@ -247,9 +247,9 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
         $pre = __METHOD__ . " : ";
         $this->_logger->debug($pre . 'bof');
         $data         = $this->request->getPostValue();
+
         $this->_order = $this->_checkoutSession->getLastRealOrder();
         $order        = $this->_order;
-
         $resultRedirectFactory = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
 
         if (!$this->_order->getId()) {
@@ -271,17 +271,6 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
 
             $this->pageFactory->create();
             try {
-                $objectManager = ObjectManager::getInstance();
-
-                $customerId = $order->getCustomerId();
-
-                if ($customerId !== null) {
-                    $customerData = $objectManager->create(Customer::class)
-                                                  ->load($customerId);
-
-                    $this->customerSession->setCustomerAsLoggedIn($customerData);
-                }
-
                 //Get Payment
                 $payment           = $order->getPayment();
                 $paymentMethodType = $payment->getAdditionalInformation()
@@ -310,7 +299,11 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
                 }
 
                 if (!empty($status) && $validateChecksum && $this->processOrder($order, $status, $data)) {
+                    $this->loginCustomer($order);
                     $resultRedirect = $resultRedirectFactory->setPath($successPath);
+                } elseif ($validateChecksum) {
+                    $this->loginCustomer($order);
+                    $resultRedirect = $resultRedirectFactory->setPath($cartPath);
                 } else {
                     $resultRedirect = $resultRedirectFactory->setPath($cartPath);
                 }
@@ -327,6 +320,27 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
     }
 
     /**
+     * Securely log in the customer
+     *
+     * @param $order
+     *
+     * @return void
+     */
+    private function loginCustomer($order): void
+    {
+        $objectManager = ObjectManager::getInstance();
+
+        $customerId = $order->getCustomerId();
+
+        if ($customerId !== null) {
+            $customerData = $objectManager->create(Customer::class)
+                                          ->load($customerId);
+
+            $this->customerSession->setCustomerAsLoggedIn($customerData);
+        }
+    }
+
+    /**
      * Process order after redirect from pay page
      *
      * @param OrderInterface $order
@@ -336,13 +350,13 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
      * @return bool
      * @throws LocalizedException
      */
-    public function processOrder(OrderInterface $order, int $status, array $data): bool
+    public function processOrder(Order $order, int $status, array $data): bool
     {
         $success = false;
 
         $canProcessThisOrder = $this->_paymentMethod->getConfigData(
-                'ipn_method'
-            ) != '0' && $order->getPaywebPaymentProcessed() != 1;
+            'ipn_method'
+        ) != '0' && $order->getPaywebPaymentProcessed() != 1;
 
         switch ($status) {
             case 1:
@@ -357,28 +371,6 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
 
                     if ($this->getConfigData('successful_order_state') != "") {
                         $state = $this->getConfigData('successful_order_state');
-                    }
-
-                    $order_successful_email = $this->getConfigData('order_email');
-
-                    if ($order_successful_email != '0') {
-                        $this->OrderSender->send($order);
-                        // Add status history comment
-                        $history = $order->addCommentToStatusHistory(
-                            __('Notified customer about order #%1.', $order->getId())
-                        );
-                        $history->setIsCustomerNotified(true);
-
-                        try {
-                            // Save the status history
-                            $this->orderStatusHistoryRepository->save($history);
-
-                            // Save the order
-                            $this->orderRepository->save($order);
-                        } catch (LocalizedException $e) {
-                            // Handle any exceptions during the save process
-                            $this->_logger->error('Order save error: ' . $e->getMessage());
-                        }
                     }
 
                     // Capture invoice when payment is successful
@@ -422,6 +414,28 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
 
                     if ($this->enableLogging === '1') {
                         $this->_logger->info('Order #' . $order->getId() . ' Saved @ Success.php');
+                    }
+                }
+
+                $order_successful_email = $this->getConfigData('order_email');
+
+                if ($order_successful_email != '0') {
+                    $this->orderSender->send($order);
+                    // Add status history comment
+                    $history = $order->addCommentToStatusHistory(
+                        __('Notified customer about order #%1.', $order->getId())
+                    );
+                    $history->setIsCustomerNotified(true);
+
+                    try {
+                        // Save the status history
+                        $this->orderStatusHistoryRepository->save($history);
+
+                        // Save the order
+                        $this->orderRepository->save($order);
+                    } catch (LocalizedException $e) {
+                        // Handle any exceptions during the save process
+                        $this->_logger->error('Order save error: ' . $e->getMessage());
                     }
                 }
 

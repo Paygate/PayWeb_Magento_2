@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2024 Payfast (Pty) Ltd
+ * Copyright (c) 2025 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -11,12 +11,12 @@
 <div class="rk button">
     <form action="<?=
     /** @noinspection PhpUndefinedVariableInspection */
-    $block->escapeUrl($block->getGateUrl()); ?>" method="POST">
+    $escaper->escapeUrl($block->getGateUrl()); ?>" method="POST">
         <?php
         foreach ($block->getPostData() as $key => $value): ?>
-            <input type="hidden" name="<?= $block->escapeHtml($key); ?>"
-                   value="<?= $block->escapeHtml($value); ?>">
-        <?php
+            <input type="hidden" name="<?= $escaper->escapeHtml($key); ?>"
+                   value="<?= $escaper->escapeHtml($value); ?>">
+            <?php
 
         endforeach; ?>
         <button type="submit">Pay</button>

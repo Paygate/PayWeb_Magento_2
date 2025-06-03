@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2024 Payfast (Pty) Ltd
+ * Copyright (c) 2025 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -92,7 +92,7 @@ class Index extends AbstractPaygate
      * @param UrlInterface $urlBuilder
      * @param OrderRepositoryInterface $orderRepository
      * @param StoreManagerInterface $storeManager
-     * @param OrderSender $OrderSender
+     * @param OrderSender $orderSender
      * @param DateTime $date
      * @param CollectionFactory $orderCollectionFactory
      * @param Builder $_transactionBuilder
@@ -123,7 +123,7 @@ class Index extends AbstractPaygate
         UrlInterface $urlBuilder,
         OrderRepositoryInterface $orderRepository,
         StoreManagerInterface $storeManager,
-        OrderSender $OrderSender,
+        OrderSender $orderSender,
         DateTime $date,
         CollectionFactory $orderCollectionFactory,
         Builder $_transactionBuilder,
@@ -144,6 +144,7 @@ class Index extends AbstractPaygate
         $this->encryptor                    = $encryptor;
         $this->orderStatusHistoryRepository = $orderStatusHistoryRepository;
         $this->historyFactory               = $historyFactory;
+        $this->orderSender = $orderSender;
 
         parent::__construct(
             $pageFactory,
@@ -161,7 +162,7 @@ class Index extends AbstractPaygate
             $urlBuilder,
             $orderRepository,
             $storeManager,
-            $OrderSender,
+            $orderSender,
             $date,
             $orderCollectionFactory,
             $_transactionBuilder,
@@ -360,7 +361,6 @@ class Index extends AbstractPaygate
     {
         $order_successful_email = $this->_paymentMethod->getConfigData('order_email');
         if ($order_successful_email != '0') {
-            $this->OrderSender->send($order);
             // Add status history comment
             $history = $order->addCommentToStatusHistory(
                 __('Notified customer about order #%1.', $order->getId())
@@ -407,10 +407,10 @@ class Index extends AbstractPaygate
             $this->invoiceSender->send($invoice);
             // Create a status history comment
             $history = $this->historyFactory->create()
-                                            ->setStatus($order->getStatus())
-                                            ->setEntityName('order')
-                                            ->setComment(__('Notified customer about invoice #%1.', $invoice->getId()))
-                                            ->setIsCustomerNotified(true);
+                ->setStatus($order->getStatus())
+                ->setEntityName('order')
+                ->setComment(__('Notified customer about invoice #%1.', $invoice->getId()))
+                ->setIsCustomerNotified(true);
 
             // Add the history to the order
             $order->addStatusHistory($history);
@@ -467,17 +467,17 @@ class Index extends AbstractPaygate
          */
         $transaction = $this->_transactionFactory->create();
         $transaction->addObject($invoice)
-                    ->addObject($invoice->getOrder())
-                    ->save();
+            ->addObject($invoice->getOrder())
+            ->save();
 
         // Add status history comment
         // Create new status history entry
         $statusHistory = $this->historyFactory->create();
         $statusHistory->setOrder($this->_order)
-                      ->setStatus($this->_order->getStatus())
-                      ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
-                      ->setComment(__('Notified customer about invoice #%1.', $invoice->getIncrementId()))
-                      ->setIsCustomerNotified(true);
+            ->setStatus($this->_order->getStatus())
+            ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
+            ->setComment(__('Notified customer about invoice #%1.', $invoice->getIncrementId()))
+            ->setIsCustomerNotified(true);
 
         // Save status history using repository
         $this->orderStatusHistoryRepository->save($statusHistory);

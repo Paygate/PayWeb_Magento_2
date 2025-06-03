@@ -1,5 +1,11 @@
 # Changelog
 
+## [[v2.6.1]](https://github.com/Paygate/PayWeb_Magento_2/releases/tag/v2.6.1)
+
+### Fixed
+
+- Addressed bug fixes and security improvements.
+
 ## [[v2.6.0]](https://github.com/Paygate/PayWeb_Magento_2/releases/tag/v2.6.0)
 
 ### Added

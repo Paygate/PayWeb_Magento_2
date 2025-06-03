@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2024 Payfast (Pty) Ltd
+ * Copyright (c) 2025 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -30,7 +30,6 @@ use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
-
 
 /**
  * Responsible for loading page content.
@@ -127,15 +126,6 @@ class Index implements HttpGetActionInterface, CsrfAwareActionInterface
         $pre = __METHOD__ . " : ";
 
         $page_object = $this->pageFactory->create();
-
-        // Get the current customer session
-        $customerSession = $this->customerSession;
-
-        // Check if the customer is logged in
-        if ($customerSession->isLoggedIn()) {
-            // Set the customer session lifetime to 30 days
-            $customerSession->setLifetime(30 * 60 * 60);
-        }
 
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
 

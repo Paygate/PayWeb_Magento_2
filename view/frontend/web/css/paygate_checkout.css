@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Payfast (Pty) Ltd
+ * Copyright (c) 2025 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -60,6 +60,10 @@ span.payment-type-label-img {
 img.payment-type-label-img {
     height: 20px;
     margin-left: auto !important;
+}
+
+#paygate-logo {
+    height: 20px;
 }
 
 /* payment types style end */

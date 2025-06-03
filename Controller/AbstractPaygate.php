@@ -13,7 +13,7 @@
  */
 
 /*
- * Copyright (c) 2024 Payfast (Pty) Ltd
+ * Copyright (c) 2025 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -195,7 +195,7 @@ abstract class AbstractPaygate implements
     /**
      * @var OrderSender
      */
-    protected OrderSender $OrderSender;
+    protected OrderSender $orderSender;
 
     /**
      * @var UrlInterface
@@ -243,7 +243,7 @@ abstract class AbstractPaygate implements
      * @param UrlInterface $urlBuilder
      * @param OrderRepositoryInterface $orderRepository
      * @param StoreManagerInterface $storeManager
-     * @param OrderSender $OrderSender
+     * @param OrderSender $orderSender
      * @param DateTime $date
      * @param CollectionFactory $orderCollectionFactory
      * @param Builder $_transactionBuilder
@@ -268,7 +268,7 @@ abstract class AbstractPaygate implements
         UrlInterface $urlBuilder,
         OrderRepositoryInterface $orderRepository,
         StoreManagerInterface $storeManager,
-        OrderSender $OrderSender,
+        OrderSender $orderSender,
         DateTime $date,
         CollectionFactory $orderCollectionFactory,
         Builder $_transactionBuilder,
@@ -292,7 +292,7 @@ abstract class AbstractPaygate implements
         $this->pageFactory             = $pageFactory;
         $this->_invoiceService         = $invoiceService;
         $this->invoiceSender           = $invoiceSender;
-        $this->OrderSender             = $OrderSender;
+        $this->orderSender             = $orderSender;
         $this->_transactionFactory     = $transactionFactory;
         $this->_paymentMethod          = $paymentMethod;
         $this->_urlBuilder             = $urlBuilder;
