@@ -60,6 +60,9 @@ use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\App\ObjectManager;
 use PayGate\PayWeb\Model\Config;
+use PayGate\PayWeb\Helper\OrderLock;
+use PayGate\PayWeb\Helper\TransactionRetry;
+use Magento\Framework\DB\Adapter\DeadlockException;
 
 /**
  * Responsible for loading page content.
@@ -132,6 +135,16 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
     private OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository;
 
     /**
+     * @var OrderLock
+     */
+    private OrderLock $orderLock;
+
+    /**
+     * @var TransactionRetry
+     */
+    private TransactionRetry $transactionRetry;
+
+    /**
      * @param PageFactory $pageFactory
      * @param CustomerSession $customerSession
      * @param CheckoutSession $checkoutSession
@@ -163,6 +176,8 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
      * @param CustomerRepositoryInterface $customerRepository
      * @param PayGateConfig $paygateconfig
      * @param OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository
+     * @param OrderLock $orderLock
+     * @param TransactionRetry $transactionRetry
      */
     public function __construct(
         PageFactory $pageFactory,
@@ -195,7 +210,9 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
         ResultFactory $resultFactory,
         CustomerRepositoryInterface $customerRepository,
         PayGateConfig $paygateconfig,
-        OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository
+        OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository,
+        OrderLock $orderLock,
+        TransactionRetry $transactionRetry
     ) {
         $this->orderModel                   = $orderModel;
         $this->scopeConfigInterface         = $scopeConfigInterface;
@@ -209,6 +226,8 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
         $this->_paygateconfig               = $paygateconfig;
         $this->enableLogging                = $this->_paygateconfig->getEnableLogging();
         $this->orderStatusHistoryRepository = $orderStatusHistoryRepository;
+        $this->orderLock                    = $orderLock;
+        $this->transactionRetry             = $transactionRetry;
 
         parent::__construct(
             $pageFactory,
@@ -246,10 +265,10 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
     {
         $pre = __METHOD__ . " : ";
         $this->_logger->debug($pre . 'bof');
-        $data         = $this->request->getPostValue();
+        $data = $this->request->getPostValue();
 
-        $this->_order = $this->_checkoutSession->getLastRealOrder();
-        $order        = $this->_order;
+        $this->_order          = $this->_checkoutSession->getLastRealOrder();
+        $order                 = $this->_order;
         $resultRedirectFactory = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
 
         if (!$this->_order->getId()) {
@@ -353,16 +372,67 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
     public function processOrder(Order $order, int $status, array $data): bool
     {
         $success = false;
+        $orderId = $order->getId();
 
-        $canProcessThisOrder = $this->_paymentMethod->getConfigData(
-            'ipn_method'
-        ) != '0' && $order->getPaywebPaymentProcessed() != 1;
+        // Check if order is already being processed
+        if ($this->orderLock->isLocked($orderId)) {
+            $this->_logger->info(
+                "OrderID {$orderId} - ALREADY BEING PROCESSED BY ANOTHER INSTANCE - WAITING"
+            );
+
+            // Wait for lock to be released
+            if (!$this->orderLock->waitForLockRelease($orderId, 10)) {
+                $this->_logger->warning(
+                    "OrderID {$orderId} - TIMEOUT WAITING FOR LOCK RELEASE"
+                );
+                return false;
+            }
+
+            // Reload order and check if already processed
+            $order = $this->orderRepository->get($orderId);
+            if ($order->getData('payweb_payment_processed') == 1) {
+                $this->_logger->info(
+                    "OrderID {$orderId} - ALREADY PROCESSED (AFTER LOCK WAIT) - SKIPPING"
+                );
+                return true;
+            }
+        }
+
+        // Acquire lock for order processing
+        if (!$this->orderLock->acquireLock($orderId)) {
+            $this->_logger->info(
+                "OrderID {$orderId} - UNABLE TO ACQUIRE LOCK - SKIPPING"
+            );
+            return false;
+        }
+
+        try {
+            $canProcessThisOrder = $this->_paymentMethod->getConfigData(
+                'ipn_method'
+            ) != '0' && $order->getData('payweb_payment_processed') != 1;
+
+        $this->_logger->info(
+            'Success.php - OrderID: ' . $order->getId() . ' - IPN Method: ' . $this->_paymentMethod->getConfigData(
+                'ipn_method'
+            ) . ' - Flag: ' . ($order->getData(
+                'payweb_payment_processed'
+            ) ?: '0') . ' - CanProcess: ' . ($canProcessThisOrder ? 'YES' : 'NO')
+        );
 
         switch ($status) {
             case 1:
                 // Check if order process by IPN or Redirect
                 if ($canProcessThisOrder) {
-                    $order->setPaywebPaymentProcessed(1)->save();
+                    $this->_logger->info(
+                        'Success.php - OrderID: ' . $order->getId(
+                        ) . ' - Processing order (setting flag and updating status)'
+                    );
+                    $order->setData('payweb_payment_processed', 1);
+
+                    // Use transaction retry helper for order save
+                    $this->transactionRetry->retryOrderSave($order, function($reloadedOrder) {
+                        $reloadedOrder->setData('payweb_payment_processed', 1);
+                    });
                     $status = Order::STATE_PROCESSING;
                     $state  = Order::STATE_PROCESSING;
                     if ($this->getConfigData('successful_order_status') != "") {
@@ -399,8 +469,8 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
                             // Save the status history
                             $this->orderStatusHistoryRepository->save($history);
 
-                            // Save the order
-                            $this->orderRepository->save($order);
+                            // Save the order with retry logic
+                            $this->transactionRetry->retryOrderSave($order);
                         } catch (LocalizedException $e) {
                             // Handle any exceptions during the save process
                             $this->_logger->error('Order save error: ' . $e->getMessage());
@@ -410,33 +480,61 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
                     // Save Transaction Response
                     $this->createTransaction($order, $data);
                     $order->setState($state)->setStatus($status);
-                    $this->orderRepository->save($order);
+
+                    // Use transaction retry helper for order save
+                    $this->transactionRetry->retryOrderSave($order, function($reloadedOrder) use ($state, $status) {
+                        $reloadedOrder->setState($state)->setStatus($status);
+                    });
 
                     if ($this->enableLogging === '1') {
                         $this->_logger->info('Order #' . $order->getId() . ' Saved @ Success.php');
                     }
-                }
 
-                $order_successful_email = $this->getConfigData('order_email');
+                    $order_successful_email = $this->getConfigData('order_email');
+                    if ($order_successful_email != '0') {
+                        $paywebEmailSent = $order->getData('payweb_order_email_sent');
+                        if (!$order->getEmailSent() && !$paywebEmailSent) {
+                            $this->orderSender->send($order);
+                            // Set custom flag to prevent duplicate emails
+                            $order->setData('payweb_order_email_sent', 1);
+                            $history = $order->addCommentToStatusHistory(
+                                __('Notified customer about order #%1.', $order->getId())
+                            );
+                            $history->setIsCustomerNotified(true);
 
-                if ($order_successful_email != '0') {
-                    $this->orderSender->send($order);
-                    // Add status history comment
-                    $history = $order->addCommentToStatusHistory(
-                        __('Notified customer about order #%1.', $order->getId())
-                    );
-                    $history->setIsCustomerNotified(true);
+                            try {
+                                // Save the status history
+                                $this->orderStatusHistoryRepository->save($history);
 
-                    try {
-                        // Save the status history
-                        $this->orderStatusHistoryRepository->save($history);
+                                // Save the order with retry logic
+                                $this->transactionRetry->retryOrderSave($order, function($reloadedOrder) {
+                                    $reloadedOrder->setData('payweb_order_email_sent', 1);
+                                });
 
-                        // Save the order
-                        $this->orderRepository->save($order);
-                    } catch (LocalizedException $e) {
-                        // Handle any exceptions during the save process
-                        $this->_logger->error('Order save error: ' . $e->getMessage());
+                                if ($this->enableLogging === '1') {
+                                    $this->_logger->info(
+                                        'Order email sent for order #' . $order->getId() . ' from Success.php'
+                                    );
+                                }
+                            } catch (LocalizedException $e) {
+                                // Handle any exceptions during the save process
+                                $this->_logger->error('Order save error: ' . $e->getMessage());
+                            }
+                        } else {
+                            if ($this->enableLogging === '1') {
+                                $this->_logger->info(
+                                    'Order email already sent for order #' . $order->getId(
+                                    ) . ', skipping in Success.php (EmailSent: ' . ($order->getEmailSent(
+                                    ) ? 'YES' : 'NO') . ', PaywebEmailSent: ' . ($paywebEmailSent ? 'YES' : 'NO') . ')'
+                                );
+                            }
+                        }
                     }
+                } else {
+                    $this->_logger->info(
+                        'Success.php - OrderID: ' . $order->getId(
+                        ) . ' - SKIPPED: Order already processed by IPN or flag set'
+                    );
                 }
 
                 $success = true;
@@ -446,7 +544,13 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
                 $this->messageManager->addNoticeMessage('Transaction has been declined.');
                 $this->_checkoutSession->restoreQuote();
                 if ($canProcessThisOrder) {
-                    $order->setPaywebPaymentProcessed(1)->save();
+                    $order->setData('payweb_payment_processed', 1);
+
+                    // Use transaction retry helper for order save
+                    $this->transactionRetry->retryOrderSave($order, function($reloadedOrder) {
+                        $reloadedOrder->setData('payweb_payment_processed', 1);
+                    });
+
                     $this->createTransaction($order, $data);
                     $order->cancel();
                     $history = $order->addCommentToStatusHistory(
@@ -455,7 +559,9 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
                         )
                     );
                     $this->orderStatusHistoryRepository->save($history);
-                    $this->orderRepository->save($order);
+
+                    // Use transaction retry helper for final order save
+                    $this->transactionRetry->retryOrderSave($order);
 
                     if ($this->enableLogging === '1') {
                         $this->_logger->info('Order #' . $order->getId() . ' Declined @ Success.php');
@@ -466,7 +572,13 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
                 $this->messageManager->addNoticeMessage('Transaction has been cancelled');
                 $this->_checkoutSession->restoreQuote();
                 if ($canProcessThisOrder) {
-                    $order->setPaywebPaymentProcessed(1)->save();
+                    $order->setData('payweb_payment_processed', 1);
+
+                    // Use transaction retry helper for order save
+                    $this->transactionRetry->retryOrderSave($order, function($reloadedOrder) {
+                        $reloadedOrder->setData('payweb_payment_processed', 1);
+                    });
+
                     $this->createTransaction($order, $data);
                     $order->cancel();
                     $history = $order->addCommentToStatusHistory(
@@ -475,13 +587,25 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
                         )
                     );
                     $this->orderStatusHistoryRepository->save($history);
-                    $this->orderRepository->save($order);
+
+                    // Use transaction retry helper for final order save
+                    $this->transactionRetry->retryOrderSave($order);
 
                     if ($this->enableLogging === '1') {
                         $this->_logger->info('Order #' . $order->getId() . ' Cancelled @ Success.php');
                     }
                 }
                 break;
+        }
+
+        } catch (\Exception $e) {
+            $this->_logger->error(
+                "Error processing order {$orderId}: " . $e->getMessage(),
+                ['exception' => $e]
+            );
+            throw $e;
+        } finally {
+            $this->orderLock->releaseLock($orderId);
         }
 
         return $success;

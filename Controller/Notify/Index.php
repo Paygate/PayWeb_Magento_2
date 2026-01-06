@@ -48,6 +48,9 @@ use Psr\Log\LoggerInterface;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\App\ResponseInterface;
+use Magento\Framework\App\CacheInterface;
+use PayGate\PayWeb\Helper\OrderLock;
+use PayGate\PayWeb\Helper\TransactionRetry;
 
 class Index extends AbstractPaygate
 {
@@ -75,6 +78,24 @@ class Index extends AbstractPaygate
      * @var OrderStatusHistoryInterfaceFactory
      */
     private OrderStatusHistoryInterfaceFactory $historyFactory;
+    /**
+     * @var OrderFactory
+     */
+    protected $orderFactory;
+    /**
+     * @var CacheInterface
+     */
+    protected $cache;
+
+    /**
+     * @var OrderLock
+     */
+    private OrderLock $orderLock;
+
+    /**
+     * @var TransactionRetry
+     */
+    private TransactionRetry $transactionRetry;
 
     /**
      * @param PageFactory $pageFactory
@@ -106,6 +127,9 @@ class Index extends AbstractPaygate
      * @param EncryptorInterface $encryptor
      * @param OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository
      * @param OrderStatusHistoryInterfaceFactory $historyFactory
+     * @param CacheInterface $cache
+     * @param OrderLock $orderLock
+     * @param TransactionRetry $transactionRetry
      */
     public function __construct(
         PageFactory $pageFactory,
@@ -135,7 +159,10 @@ class Index extends AbstractPaygate
         PayGateConfig $paygateconfig,
         EncryptorInterface $encryptor,
         OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository,
-        OrderStatusHistoryInterfaceFactory $historyFactory
+        OrderStatusHistoryInterfaceFactory $historyFactory,
+        CacheInterface $cache,
+        OrderLock $orderLock,
+        TransactionRetry $transactionRetry
     ) {
         $this->transactionModel             = $transactionModel;
         $this->resultFactory                = $resultFactory;
@@ -144,7 +171,11 @@ class Index extends AbstractPaygate
         $this->encryptor                    = $encryptor;
         $this->orderStatusHistoryRepository = $orderStatusHistoryRepository;
         $this->historyFactory               = $historyFactory;
-        $this->orderSender = $orderSender;
+        $this->orderSender                  = $orderSender;
+        $this->orderFactory                 = $orderFactory;
+        $this->cache                        = $cache;
+        $this->orderLock                    = $orderLock;
+        $this->transactionRetry             = $transactionRetry;
 
         parent::__construct(
             $pageFactory,
@@ -183,104 +214,59 @@ class Index extends AbstractPaygate
      */
     public function execute()
     {
-        $pre = __METHOD__ . " : ";
-        $this->_logger->debug($pre . 'bof');
-
-        $errors = false;
-
-        $notify_data = [];
-        // Get notify data
-        $paygate_data = $this->getPostData();
-
-        if ($paygate_data === false) {
-            $errors = true;
-        }
-
-        // Verify security signature
-        $checkSumParams = '';
-        if (!$errors) {
-            foreach ($paygate_data as $key => $val) {
-                $notify_data[$key] = $val;
-
-                if ($key == 'PAYGATE_ID') {
-                    $checkSumParams .= $val;
-                    continue;
-                }
-
-                if ($key === 'AUTH_CODE') {
-                    if ($val === 'null') {
-                        $checkSumParams .= '';
-                    } else {
-                        $checkSumParams .= $val;
-                    }
-                    continue;
-                }
-
-                /**
-                 * Re-check condition
-                 *
-                 * @noinspection PhpConditionAlreadyCheckedInspection
-                 */
-                if ($key != 'CHECKSUM' && $key != 'PAYGATE_ID' && $key !== 'AUTH_CODE') {
-                    $checkSumParams .= $val;
-                }
-
-                if (empty($notify_data)) {
-                    $errors = true;
-                }
-            }
-
-            if ($this->enableLogging === '1') {
-                $this->_logger->info('Reference @ Notify.php: ' . json_encode($notify_data['REFERENCE']));
-                $this->_logger->info('Checksum @ Notify.php: ' . json_encode($notify_data['CHECKSUM']));
-            }
-
-            if ($this->getConfigData('test_mode') != '0') {
-                $encryption_key = 'secret';
-            } else {
-                $encryption_key = $this->encryptor->decrypt($this->getConfigData('encryption_key'));
-            }
-            $checkSumParams .= $encryption_key;
-        }
-
-        // Verify security signature
-        if (!$errors) {
-            //@codingStandardsIgnoreStart
-            $checkSumParams = md5($checkSumParams);
-            //@codingStandardsIgnoreEnd
-            if ($checkSumParams != $notify_data['CHECKSUM']) {
-                $errors = true;
-            }
-        }
-
-        $paygate_data['PAYMENT_TITLE'] = "PAYGATE_PAYWEB";
-
-        if (!$errors && isset($paygate_data['TRANSACTION_STATUS']) && $this->_paymentMethod->getConfigData(
-                'ipn_method'
-            ) == '0'
-        ) {
-            // Prepare PayGate Data
-            $status = filter_var($paygate_data['TRANSACTION_STATUS'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-            $orderId = $this->request->getParam('eid');
-            $order   = $this->orderRepository->get((int)$orderId);
-
-            if ($order->getPaywebPaymentProcessed() == 1) {
-                $this->_logger->debug('IPN ORDER ALREADY BEING PROCESSED');
-            } else {
-                $order->setPaywebPaymentProcessed(1)->save();
-                $this->processOrder($order, $status, $paygate_data);
-            }
-        } else {
-            $this->_logger->debug('IPN NOT START');
-        }
-        $this->_logger->debug($pre . 'eof');
-
         $resultRaw = $this->resultFactory->create(ResultFactory::TYPE_RAW);
-
         $resultRaw->setHttpResponseCode(200);
-
         $resultRaw->setContents('OK');
+
+        // Retrieve PayGate data
+        $paygate_data = $this->getPostData();
+        $status       = isset($paygate_data['TRANSACTION_STATUS']) ? (int)$paygate_data['TRANSACTION_STATUS'] : null;
+        $orderId      = $this->request->getParam('eid');
+        if ($orderId && $status !== null) {
+            // Double-check with cache to prevent race conditions
+            $cacheKey       = 'payweb_ipn_processed_' . $orderId;
+            $cacheProcessed = $this->cache->load($cacheKey);
+
+            if ($cacheProcessed) {
+                $this->_logger->info('OrderID ' . $orderId . ' - ALREADY PROCESSED (CACHE CHECK) - SKIPPING');
+
+                return $resultRaw;
+            }
+
+            $order = $this->orderRepository->get($orderId);
+            if (!$order || !$order->getId()) {
+                $this->_logger->error('Order not found for ID: ' . $orderId);
+
+                return $resultRaw;
+            }
+
+            $currentFlag = $order->getData('payweb_payment_processed');
+
+            if ($currentFlag == 1) {
+                $this->_logger->info('OrderID ' . $orderId . ' - IPN ORDER ALREADY BEING PROCESSED - SKIPPING');
+                $this->cache->save('1', $cacheKey, [], 3600);
+
+                return $resultRaw;
+            } else {
+                // Set cache immediately to prevent race conditions
+                $this->cache->save('1', $cacheKey, [], 3600);
+
+                // Set flag immediately to prevent race conditions
+                $order->setData('payweb_payment_processed', 1);
+                try {
+                    // Use transaction retry helper for order save
+                    $this->transactionRetry->retryOrderSave($order, function($reloadedOrder) {
+                        $reloadedOrder->setData('payweb_payment_processed', 1);
+                    });
+                    $order = $this->orderRepository->get($orderId);
+
+                    $this->processOrder($order, $status, $paygate_data);
+                } catch (\Exception $e) {
+                    $this->_logger->error('OrderID ' . $orderId . ' - Error saving order: ' . $e->getMessage());
+                    $this->processOrder($order, $status, $paygate_data);
+                }
+            }
+        }
 
         return $resultRaw;
     }
@@ -303,20 +289,17 @@ class Index extends AbstractPaygate
             case 1:
                 $orderState = $order->getState();
                 if ($orderState != Order::STATE_COMPLETE && $orderState != Order::STATE_PROCESSING) {
-                    $status = Order::STATE_PROCESSING;
-                    $state  = Order::STATE_PROCESSING;
+                    $newOrderStatus = Order::STATE_PROCESSING;
+                    $newOrderState  = Order::STATE_PROCESSING;
 
                     if ($this->getConfigData('successful_order_status') != "") {
-                        $status = $this->getConfigData('successful_order_status');
+                        $newOrderStatus = $this->getConfigData('successful_order_status');
                     }
 
                     if ($this->getConfigData('successful_order_state') != "") {
-                        $state = $this->getConfigData('successful_order_state');
+                        $newOrderState = $this->getConfigData('successful_order_state');
                     }
 
-                    if ($this->_sendOrderEmail($order)) {
-                        // Optionally, handle the comment logging for order notification
-                    }
 
                     $invoice = $this->_createAndCaptureInvoice($order);
 
@@ -324,13 +307,17 @@ class Index extends AbstractPaygate
                         // Optionally, handle the comment logging for invoice notification
                     }
 
-                    $this->createTransaction($order, $paygate_data);
-                    $order->setState($state)->setStatus($status);
-                    $this->orderRepository->save($order);
-
-                    if ($this->enableLogging === '1') {
-                        $this->_logger->info('Order #' . $order->getId() . ' Saved @ Notify.php');
+                    if ($this->_sendOrderEmail($order)) {
+                        // Optionally, handle the comment logging for order notification
                     }
+
+                    $this->createTransaction($order, $paygate_data);
+                    $order->setState($newOrderState)->setStatus($newOrderStatus);
+
+                    // Use transaction retry helper for order save
+                    $this->transactionRetry->retryOrderSave($order, function($reloadedOrder) use ($newOrderState, $newOrderStatus) {
+                        $reloadedOrder->setState($newOrderState)->setStatus($newOrderStatus);
+                    });
 
                     $success = true;
                 }
@@ -340,7 +327,6 @@ class Index extends AbstractPaygate
             case 0:
             default:
                 $this->_checkoutSession->restoreQuote();
-                $order->setPaywebPaymentProcessed(1)->save();
                 // Save Transaction Response
                 $this->createTransaction($order, $paygate_data);
                 $order->cancel();
@@ -350,7 +336,9 @@ class Index extends AbstractPaygate
                     )
                 );
                 $this->orderStatusHistoryRepository->save($history);
-                $this->orderRepository->save($order);
+
+                // Use transaction retry helper for order save
+                $this->transactionRetry->retryOrderSave($order);
                 break;
         }
 
@@ -362,23 +350,53 @@ class Index extends AbstractPaygate
         $order_successful_email = $this->_paymentMethod->getConfigData('order_email');
         if ($order_successful_email != '0') {
             // Add status history comment
-            $history = $order->addCommentToStatusHistory(
-                __('Notified customer about order #%1.', $order->getId())
-            );
-            $history->setIsCustomerNotified(true);
+            $paywebEmailSent = $order->getData('payweb_order_email_sent');
+            if (!$order->getEmailSent() && !$paywebEmailSent) {
+                try {
+                    $this->orderSender->send($order, true);
+                } catch (\Throwable $e) {
+                    $this->_logger->error(
+                        'Order email failed for order #' . $order->getId() . ': ' . $e->getMessage()
+                    );
+                }
 
-            try {
-                // Save the status history
-                $this->orderStatusHistoryRepository->save($history);
+                // Set custom flag to prevent duplicate emails
+                $order->setData('payweb_order_email_sent', 1);
 
-                // Save the order
-                $this->orderRepository->save($order);
-            } catch (LocalizedException $e) {
-                // Handle any exceptions during the save process
-                $this->_logger->error('Order save error: ' . $e->getMessage());
+                $history = $order->addCommentToStatusHistory(
+                    __('Notified customer about order #%1.', $order->getId())
+                );
+                $history->setIsCustomerNotified(true);
+
+                try {
+                    // Save the status history
+                    $this->orderStatusHistoryRepository->save($history);
+
+                    // Save the order with retry logic
+                    $this->transactionRetry->retryOrderSave($order, function($reloadedOrder) {
+                        $reloadedOrder->setData('payweb_order_email_sent', 1);
+                    });
+
+                    if ($this->enableLogging === '1') {
+                        $this->_logger->info(
+                            'Order email sent for order #' . $order->getId() . ' from Notify/Index.php'
+                        );
+                    }
+                } catch (LocalizedException $e) {
+                    // Handle any exceptions during the save process
+                    $this->_logger->error('Order save error: ' . $e->getMessage());
+                }
+
+                return true;
+            } else {
+                if ($this->enableLogging === '1') {
+                    $this->_logger->info(
+                        'Order email already sent for order #' . $order->getId(
+                        ) . ', skipping in Notify/Index.php (EmailSent: ' . ($order->getEmailSent(
+                        ) ? 'YES' : 'NO') . ', PaywebEmailSent: ' . ($paywebEmailSent ? 'YES' : 'NO') . ')'
+                    );
+                }
             }
-
-            return true;
         }
 
         return false;
@@ -407,16 +425,16 @@ class Index extends AbstractPaygate
             $this->invoiceSender->send($invoice);
             // Create a status history comment
             $history = $this->historyFactory->create()
-                ->setStatus($order->getStatus())
-                ->setEntityName('order')
-                ->setComment(__('Notified customer about invoice #%1.', $invoice->getId()))
-                ->setIsCustomerNotified(true);
+                                            ->setStatus($order->getStatus())
+                                            ->setEntityName('order')
+                                            ->setComment(__('Notified customer about invoice #%1.', $invoice->getId()))
+                                            ->setIsCustomerNotified(true);
 
             // Add the history to the order
             $order->addStatusHistory($history);
 
             // Save the order using the repository
-            $this->orderRepository->save($order);
+            $this->transactionRetry->retryOrderSave($order);
 
             return true;
         }
@@ -467,17 +485,17 @@ class Index extends AbstractPaygate
          */
         $transaction = $this->_transactionFactory->create();
         $transaction->addObject($invoice)
-            ->addObject($invoice->getOrder())
-            ->save();
+                    ->addObject($invoice->getOrder())
+                    ->save();
 
         // Add status history comment
         // Create new status history entry
         $statusHistory = $this->historyFactory->create();
         $statusHistory->setOrder($this->_order)
-            ->setStatus($this->_order->getStatus())
-            ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
-            ->setComment(__('Notified customer about invoice #%1.', $invoice->getIncrementId()))
-            ->setIsCustomerNotified(true);
+                      ->setStatus($this->_order->getStatus())
+                      ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
+                      ->setComment(__('Notified customer about invoice #%1.', $invoice->getIncrementId()))
+                      ->setIsCustomerNotified(true);
 
         // Save status history using repository
         $this->orderStatusHistoryRepository->save($statusHistory);

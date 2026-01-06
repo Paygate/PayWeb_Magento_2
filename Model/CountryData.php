@@ -18,7 +18,8 @@ class CountryData
      *
      * @return array
      */
-    #[Pure] public function getCountries(): array
+    #[Pure]
+    public function getCountries(): array
     {
         return array_merge($this->getCountriesAToM(), $this->getCountriesNToZ());
     }

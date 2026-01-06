@@ -451,7 +451,7 @@ class Data extends AbstractHelper
      *
      * @return string
      */
-    public function createTransaction(Order $order = null, array $paymentData = []): string
+    public function createTransaction(?Order $order = null, array $paymentData = []): string
     {
         $response = '';
         try {

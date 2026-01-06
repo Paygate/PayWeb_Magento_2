@@ -28,7 +28,7 @@ class DataPatch implements DataPatchInterface
     }
 
     /**
-     * Apply Data Patch for NGenius custom order statuses
+     * Apply Data Patch for PayWeb custom order attributes
      *
      * @return void
      */
@@ -38,6 +38,10 @@ class DataPatch implements DataPatchInterface
 
         if (!$this->salesSetup->getAttribute('order', 'payweb_payment_processed')) {
             $this->salesSetup->addAttribute('order', 'payweb_payment_processed', ['type' => 'int']);
+        }
+
+        if (!$this->salesSetup->getAttribute('order', 'payweb_order_email_sent')) {
+            $this->salesSetup->addAttribute('order', 'payweb_order_email_sent', ['type' => 'int']);
         }
 
         $this->moduleDataSetup->endSetup();

@@ -7,7 +7,7 @@
 namespace PayGate\PayWeb\Logger;
 
 use Magento\Framework\Logger\Handler\Base;
-use Monolog\Logger;
+use Psr\Log\LogLevel;
 
 class Handler extends Base
 {
@@ -16,7 +16,7 @@ class Handler extends Base
      *
      * @var int
      */
-    protected $loggerType = Logger::INFO;
+    protected $loggerType = LogLevel::INFO;
 
     /**
      * Naming convection

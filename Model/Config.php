@@ -116,7 +116,7 @@ class Config extends AbstractConfig
      * @return bool
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    public function isMethodAvailable(string $methodCode = null): bool
+    public function isMethodAvailable(?string $methodCode = null): bool
     {
         return parent::isMethodAvailable($methodCode);
     }
@@ -150,7 +150,7 @@ class Config extends AbstractConfig
      *
      * @return bool
      */
-    public function isMethodSupportedForCountry(string $method = null, string $countryCode = null): bool
+    public function isMethodSupportedForCountry(?string $method = null, ?string $countryCode = null): bool
     {
         if ($method === null) {
             $method = $this->getMethodCode();
@@ -171,7 +171,7 @@ class Config extends AbstractConfig
      * @return array
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function getCountryMethods(string $countryCode = null): array
+    public function getCountryMethods(?string $countryCode = null): array
     {
         $countryMethods = [
             'other' => [
@@ -371,7 +371,7 @@ class Config extends AbstractConfig
      *
      * @return string
      */
-    protected function _getSupportedLocaleCode(string $localeCode = null): string
+    protected function _getSupportedLocaleCode(?string $localeCode = null): string
     {
         if (!$localeCode || !in_array($localeCode, $this->_supportedImageLocales)) {
             return 'en_US';
@@ -403,7 +403,8 @@ class Config extends AbstractConfig
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
-    #[Pure] protected function _getSpecificConfigPath(string $fieldName): ?string
+    #[Pure]
+    protected function _getSpecificConfigPath(string $fieldName): ?string
     {
         return $this->_mapPayGateFieldset($fieldName);
     }
