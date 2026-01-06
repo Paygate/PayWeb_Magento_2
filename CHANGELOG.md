@@ -1,5 +1,19 @@
 # Changelog
 
+## [[v2.6.2]](https://github.com/Paygate/PayWeb_Magento_2/releases/tag/v2.6.2)
+
+### Changed
+
+- Updated method signatures to use nullable type hints for better PHP 8.2 compatibility.
+- Refactored payment notification handler to use more robust order processing flow.
+
+### Fixed
+
+- Resolved an issue where duplicate payment notifications resulted in multiple invoices being created.
+- Fixed potential race conditions in payment notification processing between IPN and redirect flows.
+- Fixed duplicate order confirmation email issue where emails could be sent multiple times for the same order.
+- Corrected Logger handler to use PSR-3 LogLevel instead of deprecated Monolog Logger constants.
+
 ## [[v2.6.1]](https://github.com/Paygate/PayWeb_Magento_2/releases/tag/v2.6.1)
 
 ### Fixed

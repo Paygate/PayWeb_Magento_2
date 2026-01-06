@@ -453,7 +453,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      *
      * @return bool
      */
-    public function isAvailable(CartInterface $quote = null)
+    public function isAvailable(?CartInterface $quote = null)
     {
         return $this->_config->isMethodAvailable();
     }
@@ -636,7 +636,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
             'paygate/notify',
             ['_secure' => true]
         ) . '?eid=' . $orderID;
-        $fields['USER3']      = 'magento2-v2.6.1';
+        $fields['USER3']      = 'magento2-v2.6.2';
 
         return $fields;
     }
@@ -887,7 +887,8 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      *
      * @return mixed|string
      */
-    #[Pure] public function getCountryDetails(string $code2)
+    #[Pure]
+    public function getCountryDetails(string $code2)
     {
         $countryDataObject = new CountryData();
         $countries         = $countryDataObject->getCountries();

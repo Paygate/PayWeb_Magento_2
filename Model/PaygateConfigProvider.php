@@ -168,7 +168,8 @@ class PaygateConfigProvider implements ConfigProviderInterface
     /**
      * @inheritdoc
      */
-    #[ArrayShape(['payment' => "array[]"])] public function getConfig(): array
+    #[ArrayShape(['payment' => "array[]"])]
+    public function getConfig(): array
     {
         $pre                    = __METHOD__ . ' : ';
         $om                     = ObjectManager::getInstance();

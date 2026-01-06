@@ -180,7 +180,7 @@ abstract class AbstractConfig extends Config
      *
      * @return bool
      */
-    public function isMethodAvailable(string $methodCode = null): bool
+    public function isMethodAvailable(?string $methodCode = null): bool
     {
         $methodCode = $methodCode ?: $this->_methodCode;
 
@@ -217,7 +217,7 @@ abstract class AbstractConfig extends Config
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function isMethodSupportedForCountry(string $method = null, string $countryCode = null): bool
+    public function isMethodSupportedForCountry(?string $method = null, ?string $countryCode = null): bool
     {
         return true;
     }
