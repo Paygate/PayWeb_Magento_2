@@ -34,9 +34,9 @@ use DateInterval;
 use DateTime;
 use DateTimeZone;
 use Exception;
-use JetBrains\PhpStorm\Pure;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Customer\Model\Session as CustomerSession;
+use Magento\Directory\Helper\Data as DirectoryHelper;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\ObjectManager;
@@ -300,6 +300,16 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
     protected Client $httpClient;
 
     /**
+     * @var Uri
+     */
+    private Uri $uriHandler;
+
+    /**
+     * @var DirectoryHelper
+     */
+    private DirectoryHelper $directory;
+
+    /**
      * @param ConfigFactory $configFactory
      * @param StoreManagerInterface $storeManager
      * @param UrlInterface $urlBuilder
@@ -322,6 +332,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      * @param LoggerInterface $_logger
      * @param Uri $uriHandler
      * @param Client $httpClient
+     * @param DirectoryHelper $directory
      * @param array $data
      */
     public function __construct(
@@ -347,6 +358,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
         LoggerInterface $_logger,
         Uri $uriHandler,
         Client $httpClient,
+        DirectoryHelper $directory,
         array $data = []
     ) {
         $this->_storeManager                   = $storeManager;
@@ -370,6 +382,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
         $this->_logger                         = $_logger;
         $this->uriHandler                      = $uriHandler;
         $this->httpClient                      = $httpClient;
+        $this->directory                       = $directory;
 
         $parameters = ['params' => [$this->_code]];
 
@@ -887,7 +900,6 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      *
      * @return mixed|string
      */
-    #[Pure]
     public function getCountryDetails(string $code2)
     {
         $countryDataObject = new CountryData();
@@ -1287,7 +1299,7 @@ class PayGate extends AbstractExtensibleModel implements MethodInterface, Paymen
      *
      * @param InfoInterface $info
      *
-     * @return false
+     * @return void
      */
     public function setInfoInstance(InfoInterface $info)
     {

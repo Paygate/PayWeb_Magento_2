@@ -9,8 +9,6 @@
 
 namespace PayGate\PayWeb\Model;
 
-use JetBrains\PhpStorm\Pure;
-
 class CountryData
 {
     /**
@@ -18,7 +16,6 @@ class CountryData
      *
      * @return array
      */
-    #[Pure]
     public function getCountries(): array
     {
         return array_merge($this->getCountriesAToM(), $this->getCountriesNToZ());

@@ -42,6 +42,7 @@ use PayGate\PayWeb\Model\ConfigFactory;
 use Psr\Log\LoggerInterface;
 use GuzzleHttp\Client;
 use Magento\Payment\Api\PaymentMethodListInterface;
+use Magento\Payment\Model\MethodInterface;
 use Magento\Sales\Api\OrderItemRepositoryInterface;
 use Magento\Sales\Api\OrderStatusHistoryRepositoryInterface;
 use Magento\Sales\Api\Data\OrderStatusHistoryInterfaceFactory;
@@ -67,9 +68,9 @@ class Data extends AbstractHelper
      */
     protected $_logger;
     /**
-     * @var Magento\Sales\Model\Order\Payment\Transaction\Builder|Builder $_transactionBuilder
+     * @var Builder $_transactionBuilder
      */
-    protected Magento\Sales\Model\Order\Payment\Transaction\Builder|Builder $_transactionBuilder;
+    protected Builder $_transactionBuilder;
     /**
      * @var TransactionSearchResultInterfaceFactory
      */

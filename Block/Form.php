@@ -17,14 +17,14 @@ use Magento\Framework\View\Element\Template\Context;
 use PayGate\PayWeb\Helper\Data;
 use PayGate\PayWeb\Model\Config;
 use PayGate\PayWeb\Model\ConfigFactory;
-use PayGate\PayWeb\Model\Paygate;
+use PayGate\PayWeb\Model\PayGate;
 
 class Form extends \Magento\Payment\Block\Form
 {
     /**
-     * @var string|Paygate Payment method code
+     * @var string|PayGate Payment method code
      */
-    protected Paygate|string $_methodCode = Config::METHOD_CODE;
+    protected PayGate|string $_methodCode = Config::METHOD_CODE;
 
     /**
      * @var Data
@@ -95,9 +95,9 @@ class Form extends \Magento\Payment\Block\Form
     /**
      * Payment method code getter
      *
-     * @return string|Paygate
+     * @return string|PayGate
      */
-    public function getMethodCode(): string|Paygate
+    public function getMethodCode(): string|PayGate
     {
         $pre = __METHOD__ . " : ";
         $this->_logger->debug($pre . 'bof');
