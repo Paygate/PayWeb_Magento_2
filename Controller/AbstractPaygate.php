@@ -26,6 +26,9 @@ use Exception;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Customer\Model\Url;
+use Magento\Framework\App\ActionFlag;
+use Magento\Framework\App\Response\HttpInterface;
+use Magento\Framework\App\Response\RedirectInterface;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\App\Request\InvalidRequestException;
@@ -98,7 +101,7 @@ abstract class AbstractPaygate implements
      *
      * @var string|PayGate
      */
-    protected Paygate|string $_configMethod = Config::METHOD_CODE;
+    protected PayGate|string $_configMethod = Config::METHOD_CODE;
 
     /**
      * Checkout mode type
@@ -128,9 +131,9 @@ abstract class AbstractPaygate implements
     protected Generic $paygateSession;
 
     /**
-     * @var Data|Helper
+     * @var Data
      */
-    protected Helper|Data $_urlHelper;
+    protected Data $_urlHelper;
 
     /**
      * @var Url
@@ -178,9 +181,9 @@ abstract class AbstractPaygate implements
     protected CollectionFactory $_orderCollectionFactory;
 
     /**
-     * @var Magento\Sales\Model\Order\Payment\Transaction\Builder|Builder $_transactionBuilder
+     * @var Builder $_transactionBuilder
      */
-    protected Magento\Sales\Model\Order\Payment\Transaction\Builder|Builder $_transactionBuilder;
+    protected Builder $_transactionBuilder;
 
     /**
      * @var InvoiceService
@@ -223,9 +226,19 @@ abstract class AbstractPaygate implements
      */
     protected ManagerInterface $messageManager;
     /**
-     * @var Response
+     * @var HttpInterface
      */
-    protected Response $response;
+    protected HttpInterface $response;
+
+    /**
+     * @var ActionFlag
+     */
+    protected ActionFlag $_actionFlag;
+
+    /**
+     * @var RedirectInterface
+     */
+    protected RedirectInterface $_redirect;
 
     /**
      * @param PageFactory $pageFactory
@@ -251,6 +264,9 @@ abstract class AbstractPaygate implements
      * @param Request $request
      * @param ManagerInterface $messageManager
      * @param ResultFactory $resultFactory
+     * @param ActionFlag $actionFlag
+     * @param RedirectInterface $redirect
+     * @param HttpInterface $response
      */
     public function __construct(
         PageFactory $pageFactory,
@@ -275,7 +291,10 @@ abstract class AbstractPaygate implements
         ObjectManagerInterface $objectManager,
         Request $request,
         ManagerInterface $messageManager,
-        ResultFactory $resultFactory
+        ResultFactory $resultFactory,
+        ActionFlag $actionFlag,
+        RedirectInterface $redirect,
+        HttpInterface $response
     ) {
         $pre = __METHOD__ . " : ";
 
@@ -304,6 +323,10 @@ abstract class AbstractPaygate implements
         $this->objectManager           = $objectManager;
         $this->request                 = $request;
         $this->messageManager          = $messageManager;
+        $this->resultFactory           = $resultFactory;
+        $this->_actionFlag             = $actionFlag;
+        $this->_redirect               = $redirect;
+        $this->response                = $response;
 
         $parameters    = ['params' => [$this->_configMethod]];
         $this->_config = $this->objectManager->create($this->_configType, $parameters);
@@ -365,7 +388,7 @@ abstract class AbstractPaygate implements
     {
         $this->_actionFlag->set('', 'no-dispatch', true);
         $this->_customerSession->setBeforeAuthUrl($this->_redirect->getRefererUrl());
-        $this->request->setRedirect(
+        $this->response->setRedirect(
             $this->_urlHelper->addRequestParam($this->_customerUrl->getLoginUrl(), ['context' => 'checkout'])
         );
     }
@@ -442,9 +465,9 @@ abstract class AbstractPaygate implements
     /**
      * Return checkout session object
      *
-     * @return Session
+     * @return CheckoutSession
      */
-    protected function _getCheckoutSession(): Session
+    protected function _getCheckoutSession(): CheckoutSession
     {
         return $this->_checkoutSession;
     }

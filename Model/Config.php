@@ -17,7 +17,6 @@
 
 namespace PayGate\PayWeb\Model;
 
-use JetBrains\PhpStorm\Pure;
 use Magento\Directory\Helper\Data;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
@@ -403,7 +402,6 @@ class Config extends AbstractConfig
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
-    #[Pure]
     protected function _getSpecificConfigPath(string $fieldName): ?string
     {
         return $this->_mapPayGateFieldset($fieldName);

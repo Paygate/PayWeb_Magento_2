@@ -14,7 +14,6 @@
 
 namespace PayGate\PayWeb\Model;
 
-use JetBrains\PhpStorm\ArrayShape;
 use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Customer\Helper\Session\CurrentCustomer;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -47,14 +46,14 @@ class PaygateConfigProvider implements ConfigProviderInterface
     protected Config $config;
 
     /**
-     * @var ScopeConfig|ScopeConfigInterface
+     * @var ScopeConfigInterface
      */
-    protected ScopeConfig|ScopeConfigInterface $scopeConfig;
+    protected ScopeConfigInterface $scopeConfig;
 
     /**
-     * @var string|path
+     * @var string
      */
-    protected string|path $path = 'payment/paygate/';
+    protected string $path = 'payment/paygate/';
 
     /**
      * @var StoreManagerInterface
@@ -168,7 +167,6 @@ class PaygateConfigProvider implements ConfigProviderInterface
     /**
      * @inheritdoc
      */
-    #[ArrayShape(['payment' => "array[]"])]
     public function getConfig(): array
     {
         $pre                    = __METHOD__ . ' : ';

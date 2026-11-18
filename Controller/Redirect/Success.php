@@ -20,6 +20,9 @@ namespace PayGate\PayWeb\Controller\Redirect;
 
 use Exception;
 use Laminas\Uri\Uri;
+use Magento\Framework\App\ActionFlag;
+use Magento\Framework\App\Response\HttpInterface;
+use Magento\Framework\App\Response\RedirectInterface;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Customer\Model\Url;
@@ -178,6 +181,9 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
      * @param OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository
      * @param OrderLock $orderLock
      * @param TransactionRetry $transactionRetry
+     * @param ActionFlag $actionFlag
+     * @param RedirectInterface $redirect
+     * @param HttpInterface $response
      */
     public function __construct(
         PageFactory $pageFactory,
@@ -212,7 +218,10 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
         PayGateConfig $paygateconfig,
         OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository,
         OrderLock $orderLock,
-        TransactionRetry $transactionRetry
+        TransactionRetry $transactionRetry,
+        ActionFlag $actionFlag,
+        RedirectInterface $redirect,
+        HttpInterface $response
     ) {
         $this->orderModel                   = $orderModel;
         $this->scopeConfigInterface         = $scopeConfigInterface;
@@ -252,7 +261,10 @@ class Success extends AbstractPaygate implements RedirectLoginInterface
             $objectManager,
             $request,
             $messageManager,
-            $resultFactory
+            $resultFactory,
+            $actionFlag,
+            $redirect,
+            $response
         );
     }
 

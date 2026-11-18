@@ -14,6 +14,9 @@
 
 namespace PayGate\PayWeb\Controller\Notify;
 
+use Magento\Framework\App\ActionFlag;
+use Magento\Framework\App\Response\HttpInterface;
+use Magento\Framework\App\Response\RedirectInterface;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Customer\Model\Url;
@@ -47,7 +50,6 @@ use PayGate\PayWeb\Model\PayGate;
 use Psr\Log\LoggerInterface;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Message\ManagerInterface;
-use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\App\CacheInterface;
 use PayGate\PayWeb\Helper\OrderLock;
 use PayGate\PayWeb\Helper\TransactionRetry;
@@ -122,7 +124,6 @@ class Index extends AbstractPaygate
      * @param Request $request
      * @param ManagerInterface $messageManager
      * @param ResultFactory $resultFactory
-     * @param ResponseInterface $responseInterface
      * @param PayGateConfig $paygateconfig
      * @param EncryptorInterface $encryptor
      * @param OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepository
@@ -130,6 +131,9 @@ class Index extends AbstractPaygate
      * @param CacheInterface $cache
      * @param OrderLock $orderLock
      * @param TransactionRetry $transactionRetry
+     * @param ActionFlag $actionFlag
+     * @param RedirectInterface $redirect
+     * @param HttpInterface $response
      */
     public function __construct(
         PageFactory $pageFactory,
@@ -162,7 +166,10 @@ class Index extends AbstractPaygate
         OrderStatusHistoryInterfaceFactory $historyFactory,
         CacheInterface $cache,
         OrderLock $orderLock,
-        TransactionRetry $transactionRetry
+        TransactionRetry $transactionRetry,
+        ActionFlag $actionFlag,
+        RedirectInterface $redirect,
+        HttpInterface $response
     ) {
         $this->transactionModel             = $transactionModel;
         $this->resultFactory                = $resultFactory;
@@ -201,9 +208,9 @@ class Index extends AbstractPaygate
             $request,
             $messageManager,
             $resultFactory,
-            $encryptor,
-            $orderStatusHistoryRepository,
-            $historyFactory
+            $actionFlag,
+            $redirect,
+            $response
         );
     }
 

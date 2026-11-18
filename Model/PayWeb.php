@@ -67,12 +67,12 @@ class PayWeb implements PayWebApiInterface
     /**
      * @var PayGateModel
      */
-    protected PayGateOrig $_paygatemodel;
+    protected PayGateModel $_paygatemodel;
 
     /**
-     * @var PayGate\PayWeb\Helper\Data|Data
+     * @var Data
      */
-    protected PayGate\PayWeb\Helper\Data|Data $_PaygateHelper;
+    protected Data $_PaygateHelper;
     /**
      * @var Uri
      */

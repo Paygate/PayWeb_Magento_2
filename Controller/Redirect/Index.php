@@ -145,7 +145,7 @@ class Index implements HttpGetActionInterface, CsrfAwareActionInterface
 
         $block = $page_object->getLayout()
                              ->getBlock('paygate')
-                             ->setPaymentFormData($this->order ?? null);
+                             ->setPaymentFormData($this->order);
 
         $formData = $block->getFormData();
         if (isset($formData["error"])) {
